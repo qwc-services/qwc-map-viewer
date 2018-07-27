@@ -3,8 +3,9 @@ QWC Map Viewer
 
 Provide a [QWC2 Web Client](https://github.com/qgis/qwc2-demo-app) application using QWC services.
 
-**Note:** requires a QWC OGC service or QGIS server running on `$OGC_SERVICE_URL` and a 
-QWC Config service running on `$CONFIG_SERVICE_URL`
+**Note:** requires a QWC OGC service or QGIS server running on `$OGC_SERVICE_URL`, a 
+QWC Config service running on `$CONFIG_SERVICE_URL` and a QWC Data service running on 
+`$DATA_SERVICE_URL`
 
 
 Setup
@@ -52,9 +53,13 @@ Set the `QGIS_SERVER_URL` environment variable to the QGIS server URL
 when starting this service. (default: `http://localhost:8001/ows/` on
 qwc-qgis-server container)
 
-Set the `CONFIG_SERVICE_URL` environment variable to the QWC config service URL
+Set the `CONFIG_SERVICE_URL` environment variable to the QWC Config service URL
 when starting this service. (default: `http://localhost:5010/` on
 qwc-config-service container)
+
+Set the `DATA_SERVICE_URL` environment variable to the QWC Data service URL
+when starting this service. (default: `http://localhost:5012/` on
+qwc-data-service container)
 
 Set the `QWC2_PATH` environment variable to your QWC2 files path.
 Set the `QWC2_CONFIG` environment variable to your QWC2 `config.json` path if it is not located in `$QWC2_PATH`.
@@ -90,4 +95,4 @@ Install requirements:
 
 Start local service:
 
-    OGC_SERVICE_URL=http://localhost:5013/ CONFIG_SERVICE_URL=http://localhost:5010/ QWC2_PATH=qwc2/ python server.py
+    OGC_SERVICE_URL=http://localhost:5013/ CONFIG_SERVICE_URL=http://localhost:5010/ DATA_SERVICE_URL=http://localhost:5012/ QWC2_PATH=qwc2/ python server.py
