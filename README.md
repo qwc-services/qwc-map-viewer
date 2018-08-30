@@ -20,16 +20,7 @@ Copy your QWC2 files from a production build (see [QWC2 Quick start](https://git
     cp -r translations $DSTDIR/qwc2 && \
     cp dist/QWC2App.js $DSTDIR/qwc2/dist/ && \
     cp index.html $DSTDIR/qwc2/ && \
-    sed -e '/proxyServiceUrl/d' \
-      -e 's!permalinkServiceUrl":\s*".*"!permalinkServiceUrl": "/permalink"!' \
-      -e 's!elevationServiceUrl":\s*".*"!elevationServiceUrl": "/elevation"!' \
-      -e 's!searchServiceUrl":\s*".*"!searchServiceUrl": "/search"!' \
-      -e 's!editServiceUrl":\s*".*"!editServiceUrl": "/data"!' \
-      -e 's!authServiceUrl":\s*".*"!authServiceUrl": "/auth"!' \
-      -e 's!mapInfoService":\s*".*"!mapInfoService": "/mapinfo"!' \
-      -e 's!featureReportService":\s*".*"!featureReportService": "/document"!' \
-      -e 's!{"key": "Login", "icon": "img/login.svg"}!{{ login_logout_item }}!g' \
-      config.json > $DSTDIR/qwc2/config.json && \
+    cp config.json $DSTDIR/qwc2/config.json && \
     cd -
 
 Copy your QWC2 themes config file:
@@ -62,7 +53,20 @@ when starting this service. (default: `http://localhost:5012/` on
 qwc-data-service container)
 
 Set the `QWC2_PATH` environment variable to your QWC2 files path.
+
 Set the `QWC2_CONFIG` environment variable to your QWC2 `config.json` path if it is not located in `$QWC2_PATH`.
+
+Optionally:
+ * Set the `PERMALINK_SERVICE_URL` environment variable to the QWC permalink service URL.
+ * Set the `ELEVATION_SERVICE_URL` environment variable to the QWC elevation service URL.
+ * Set the `MAPINFO_SERVICE_URL` environment variable to the QWC map info service URL.
+ * Set the `DOCUMENT_SERVICE_URL` environment variable to the QWC document service URL.
+ * Set the `SEARCH_SERVICE_URL` environment variable to the QWC search service URL.
+ * Set the `AUTH_SERVICE_URL` environment variable to the QWC auth service URL.
+ * Set the `INFO_SERVICE_URL` environment variable to the QWC feature info proxy service URL.
+ * Set the `LEGEND_SERVICE_URL` environment variable to the QWC legend graphics proxy service URL.
+ * Set the `PRINT_SERVICE_URL` environment variable to the QWC print proxy service URL.
+
 
 Base URL:
 
