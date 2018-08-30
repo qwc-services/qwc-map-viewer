@@ -43,9 +43,33 @@ class QWC2Viewer:
         config['authServiceUrl'] = os.environ.get('AUTH_SERVICE_URL', config.get('authServiceUrl', ''))
         config['wmsDpi'] = os.environ.get('WMS_DPI', config.get('wmsDpi', '96'))
 
-        # TODO: menu item for login
+        # Look for any Login item, and change it to logout if username is not None
+        self.__replace_login__helper_plugins(config['plugins']['mobile'], username)
+        self.__replace_login__helper_plugins(config['plugins']['desktop'], username)
 
         return jsonify(config)
+
+    def __replace_login__helper_plugins(self, plugins, username):
+        """Search plugins configurations and call
+           self.__replace_login__helper_items on menuItems and toolbarItems
+        """
+        topbars = filter(lambda entry: entry['name'] == 'TopBar', plugins)
+        for topbar in topbars:
+            if "menuItems" in topbar["cfg"]:
+                self.__replace_login__helper_items(topbar["cfg"]["menuItems"], username)
+            if "toolbarItems" in topbar["cfg"]:
+                self.__replace_login__helper_items(topbar["cfg"]["toolbarItems"], username)
+
+    def __replace_login__helper_items(self, items, username):
+        """Replace Login with Logout if username is not None on Login items in
+           menuItems and toolbarItems.
+        """
+        for item in items:
+            if item["key"] == "Login" and username is not None:
+                item["key"] = "Logout"
+                item["icon"] = "logout"
+            elif "subitems" in item:
+                self.__replace_login__helper_items(item["subitems"], username)
 
     def qwc2_themes(self, username):
         """Return QWC2 themes.json for user.
