@@ -57,6 +57,7 @@ Set the `QWC2_PATH` environment variable to your QWC2 files path.
 Set the `QWC2_CONFIG` environment variable to your QWC2 `config.json` path if it is not located in `$QWC2_PATH`.
 
 Optionally:
+
  * Set the `PERMALINK_SERVICE_URL` environment variable to the QWC permalink service URL.
  * Set the `ELEVATION_SERVICE_URL` environment variable to the QWC elevation service URL.
  * Set the `MAPINFO_SERVICE_URL` environment variable to the QWC map info service URL.
