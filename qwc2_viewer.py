@@ -30,8 +30,11 @@ class QWC2Viewer:
         qwc2_path = os.environ.get('QWC2_PATH', 'qwc2/')
         configfile = os.environ.get('QWC2_CONFIG',
                                os.path.join(qwc2_path, 'config.json'))
-        with open(configfile, encoding='utf-8') as fh:
-            config = json.load(fh)
+        try:
+            with open(configfile, encoding='utf-8') as fh:
+                config = json.load(fh)
+        except Exception as e:
+            return jsonify({"error": "Unable to read config.json: %s" % e})
 
         config['proxyServiceUrl'] = os.environ.get('PROXY_SERVICE_URL', config.get('proxyServiceUrl', '')).rstript('/') + '/'
         config['permalinkServiceUrl'] = os.environ.get('PERMALINK_SERVICE_URL', config.get('permalinkServiceUrl', '')).rstript('/') + '/'
