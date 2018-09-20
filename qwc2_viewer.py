@@ -28,19 +28,19 @@ class QWC2Viewer:
         self.logger.debug('Generating config.json for username: %s', username)
 
         qwc2_path = os.environ.get('QWC2_PATH', 'qwc2/')
-        configfile = os.getenv('QWC2_CONFIG',
+        configfile = os.environ.get('QWC2_CONFIG',
                                os.path.join(qwc2_path, 'config.json'))
         with open(configfile, encoding='utf-8') as fh:
             config = json.load(fh)
 
-        config['proxyServiceUrl'] = os.environ.get('PROXY_SERVICE_URL', config.get('proxyServiceUrl', ''))
-        config['permalinkServiceUrl'] = os.environ.get('PERMALINK_SERVICE_URL', config.get('permalinkServiceUrl', ''))
-        config['elevationServiceUrl'] = os.environ.get('ELEVATION_SERVICE_URL', config.get('elevationServiceUrl', ''))
-        config['mapInfoService'] = os.environ.get('MAPINFO_SERVICE_URL', config.get('mapInfoService', ''))
-        config['featureReportService'] = os.environ.get('DOCUMENT_SERVICE_URL', config.get('featureReportService', ''))
-        config['editServiceUrl'] = os.environ.get('DATA_SERVICE_URL', config.get('editServiceUrl', ''))
-        config['searchServiceUrl'] = os.environ.get('SEARCH_SERVICE_URL', config.get('searchServiceUrl', ''))
-        config['authServiceUrl'] = os.environ.get('AUTH_SERVICE_URL', config.get('authServiceUrl', ''))
+        config['proxyServiceUrl'] = os.environ.get('PROXY_SERVICE_URL', config.get('proxyServiceUrl', '')).rstript('/') + '/'
+        config['permalinkServiceUrl'] = os.environ.get('PERMALINK_SERVICE_URL', config.get('permalinkServiceUrl', '')).rstript('/') + '/'
+        config['elevationServiceUrl'] = os.environ.get('ELEVATION_SERVICE_URL', config.get('elevationServiceUrl', '')).rstript('/') + '/'
+        config['mapInfoService'] = os.environ.get('MAPINFO_SERVICE_URL', config.get('mapInfoService', '')).rstript('/') + '/'
+        config['featureReportService'] = os.environ.get('DOCUMENT_SERVICE_URL', config.get('featureReportService', '')).rstript('/') + '/'
+        config['editServiceUrl'] = os.environ.get('DATA_SERVICE_URL', config.get('editServiceUrl', '')).rstript('/') + '/'
+        config['searchServiceUrl'] = os.environ.get('SEARCH_SERVICE_URL', config.get('searchServiceUrl', '')).rstript('/') + '/'
+        config['authServiceUrl'] = os.environ.get('AUTH_SERVICE_URL', config.get('authServiceUrl', '')).rstript('/') + '/'
         config['wmsDpi'] = os.environ.get('WMS_DPI', config.get('wmsDpi', '96'))
 
         # Look for any Login item, and change it to logout if username is not None
@@ -78,10 +78,10 @@ class QWC2Viewer:
         """
         self.logger.debug('Getting themes.json for username: %s', username)
 
-        ogc_server_url = os.environ.get('OGC_SERVICE_URL', '/ows/')
-        info_service_url = os.environ.get('INFO_SERVICE_URL', ogc_server_url)
-        legend_service_url = os.environ.get('LEGEND_SERVICE_URL', ogc_server_url)
-        print_service_url = os.environ.get('PRINT_SERVICE_URL', ogc_server_url)
+        ogc_server_url = os.environ.get('OGC_SERVICE_URL', 'http://localhost:5013/').rstript('/') + '/'
+        info_service_url = os.environ.get('INFO_SERVICE_URL', ogc_server_url).rstript('/') + '/'
+        legend_service_url = os.environ.get('LEGEND_SERVICE_URL', ogc_server_url).rstript('/') + '/'
+        print_service_url = os.environ.get('PRINT_SERVICE_URL', ogc_server_url).rstript('/') + '/'
         themes = self.permission.qwc_permissions(username)
         for item in themes.get('themes', {}).get('items', []):
             # update service URLs
