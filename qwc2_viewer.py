@@ -36,14 +36,14 @@ class QWC2Viewer:
         except Exception as e:
             return jsonify({"error": "Unable to read config.json: %s" % e})
 
-        config['proxyServiceUrl'] = os.environ.get('PROXY_SERVICE_URL', config.get('proxyServiceUrl', '')).rstript('/') + '/'
-        config['permalinkServiceUrl'] = os.environ.get('PERMALINK_SERVICE_URL', config.get('permalinkServiceUrl', '')).rstript('/') + '/'
-        config['elevationServiceUrl'] = os.environ.get('ELEVATION_SERVICE_URL', config.get('elevationServiceUrl', '')).rstript('/') + '/'
-        config['mapInfoService'] = os.environ.get('MAPINFO_SERVICE_URL', config.get('mapInfoService', '')).rstript('/') + '/'
-        config['featureReportService'] = os.environ.get('DOCUMENT_SERVICE_URL', config.get('featureReportService', '')).rstript('/') + '/'
-        config['editServiceUrl'] = os.environ.get('DATA_SERVICE_URL', config.get('editServiceUrl', '')).rstript('/') + '/'
-        config['searchServiceUrl'] = os.environ.get('SEARCH_SERVICE_URL', config.get('searchServiceUrl', '')).rstript('/') + '/'
-        config['authServiceUrl'] = os.environ.get('AUTH_SERVICE_URL', config.get('authServiceUrl', '')).rstript('/') + '/'
+        config['proxyServiceUrl'] = os.environ.get('PROXY_SERVICE_URL', config.get('proxyServiceUrl', '')).rstrip('/') + '/'
+        config['permalinkServiceUrl'] = os.environ.get('PERMALINK_SERVICE_URL', config.get('permalinkServiceUrl', '')).rstrip('/') + '/'
+        config['elevationServiceUrl'] = os.environ.get('ELEVATION_SERVICE_URL', config.get('elevationServiceUrl', '')).rstrip('/') + '/'
+        config['mapInfoService'] = os.environ.get('MAPINFO_SERVICE_URL', config.get('mapInfoService', '')).rstrip('/') + '/'
+        config['featureReportService'] = os.environ.get('DOCUMENT_SERVICE_URL', config.get('featureReportService', '')).rstrip('/') + '/'
+        config['editServiceUrl'] = os.environ.get('DATA_SERVICE_URL', config.get('editServiceUrl', '')).rstrip('/') + '/'
+        config['searchServiceUrl'] = os.environ.get('SEARCH_SERVICE_URL', config.get('searchServiceUrl', '')).rstrip('/') + '/'
+        config['authServiceUrl'] = os.environ.get('AUTH_SERVICE_URL', config.get('authServiceUrl', '')).rstrip('/') + '/'
         config['wmsDpi'] = os.environ.get('WMS_DPI', config.get('wmsDpi', '96'))
 
         # Look for any Login item, and change it to logout if username is not None
@@ -81,10 +81,10 @@ class QWC2Viewer:
         """
         self.logger.debug('Getting themes.json for username: %s', username)
 
-        ogc_server_url = os.environ.get('OGC_SERVICE_URL', 'http://localhost:5013/').rstript('/') + '/'
-        info_service_url = os.environ.get('INFO_SERVICE_URL', ogc_server_url).rstript('/') + '/'
-        legend_service_url = os.environ.get('LEGEND_SERVICE_URL', ogc_server_url).rstript('/') + '/'
-        print_service_url = os.environ.get('PRINT_SERVICE_URL', ogc_server_url).rstript('/') + '/'
+        ogc_server_url = os.environ.get('OGC_SERVICE_URL', 'http://localhost:5013/').rstrip('/') + '/'
+        info_service_url = os.environ.get('INFO_SERVICE_URL', ogc_server_url).rstrip('/') + '/'
+        legend_service_url = os.environ.get('LEGEND_SERVICE_URL', ogc_server_url).rstrip('/') + '/'
+        print_service_url = os.environ.get('PRINT_SERVICE_URL', ogc_server_url).rstrip('/') + '/'
         themes = self.permission.qwc_permissions(username)
         for item in themes.get('themes', {}).get('items', []):
             # update service URLs
