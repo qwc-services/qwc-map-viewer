@@ -36,14 +36,14 @@ class QWC2Viewer:
         except Exception as e:
             return jsonify({"error": "Unable to read config.json: %s" % e})
 
-        config['proxyServiceUrl'] = os.environ.get('PROXY_SERVICE_URL', config.get('proxyServiceUrl', '')).rstrip('/') + '/'
-        config['permalinkServiceUrl'] = os.environ.get('PERMALINK_SERVICE_URL', config.get('permalinkServiceUrl', '')).rstrip('/') + '/'
-        config['elevationServiceUrl'] = os.environ.get('ELEVATION_SERVICE_URL', config.get('elevationServiceUrl', '')).rstrip('/') + '/'
-        config['mapInfoService'] = os.environ.get('MAPINFO_SERVICE_URL', config.get('mapInfoService', '')).rstrip('/') + '/'
-        config['featureReportService'] = os.environ.get('DOCUMENT_SERVICE_URL', config.get('featureReportService', '')).rstrip('/') + '/'
-        config['editServiceUrl'] = os.environ.get('DATA_SERVICE_URL', config.get('editServiceUrl', '')).rstrip('/') + '/'
-        config['searchServiceUrl'] = os.environ.get('SEARCH_SERVICE_URL', config.get('searchServiceUrl', '')).rstrip('/') + '/'
-        config['authServiceUrl'] = os.environ.get('AUTH_SERVICE_URL', config.get('authServiceUrl', '')).rstrip('/') + '/'
+        config['proxyServiceUrl'] = self.__sanitize_url(os.environ.get('PROXY_SERVICE_URL', config.get('proxyServiceUrl', '')))
+        config['permalinkServiceUrl'] = self.__sanitize_url(os.environ.get('PERMALINK_SERVICE_URL', config.get('permalinkServiceUrl', '')))
+        config['elevationServiceUrl'] = self.__sanitize_url(os.environ.get('ELEVATION_SERVICE_URL', config.get('elevationServiceUrl', '')))
+        config['mapInfoService'] = self.__sanitize_url(os.environ.get('MAPINFO_SERVICE_URL', config.get('mapInfoService', '')))
+        config['featureReportService'] = self.__sanitize_url(os.environ.get('DOCUMENT_SERVICE_URL', config.get('featureReportService', '')))
+        config['editServiceUrl'] = self.__sanitize_url(os.environ.get('DATA_SERVICE_URL', config.get('editServiceUrl', '')))
+        config['searchServiceUrl'] = self.__sanitize_url(os.environ.get('SEARCH_SERVICE_URL', config.get('searchServiceUrl', '')))
+        config['authServiceUrl'] = self.__sanitize_url(os.environ.get('AUTH_SERVICE_URL', config.get('authServiceUrl', '')))
         config['wmsDpi'] = os.environ.get('WMS_DPI', config.get('wmsDpi', '96'))
 
         # Look for any Login item, and change it to logout if username is not None
@@ -51,6 +51,11 @@ class QWC2Viewer:
         self.__replace_login__helper_plugins(config['plugins']['desktop'], username)
 
         return jsonify(config)
+
+    def __sanitize_url(self, url):
+        """Ensure URL ends with a slash, if not empty
+        """
+        return (url.rstrip('/') + '/') if url else ""
 
     def __replace_login__helper_plugins(self, plugins, username):
         """Search plugins configurations and call
