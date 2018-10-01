@@ -91,6 +91,8 @@ class QWC2Viewer:
         legend_service_url = os.environ.get('LEGEND_SERVICE_URL', ogc_server_url).rstrip('/') + '/'
         print_service_url = os.environ.get('PRINT_SERVICE_URL', ogc_server_url).rstrip('/') + '/'
         themes = self.permission.qwc_permissions(username)
+        if not themes:
+            return jsonify({"error": "Failed to generate themes.json"})
         for item in themes.get('themes', {}).get('items', []):
             # update service URLs
             wms_name = item['wms_name']
