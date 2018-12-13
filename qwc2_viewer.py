@@ -1,6 +1,7 @@
 import os
 
-from flask import json, jsonify, render_template, Response
+from flask import json, jsonify, render_template, Response, safe_join, \
+    send_from_directory
 
 from qwc_services_core.permission import PermissionClient
 
@@ -20,21 +21,89 @@ class QWC2Viewer:
 
         self.permission = PermissionClient()
 
-    def qwc2_config(self, identity):
+    def qwc2_index(self, identity, viewer=None):
+        """Return QWC2 index.html for user.
+
+        :param str identity: User identity
+        :param str viewer: Optional custom viewer name (None for default)
+        """
+        qwc2_path = os.environ.get('QWC2_PATH', 'qwc2/')
+
+        if viewer:
+            viewers_path = os.environ.get(
+                'QWC2_VIEWERS_PATH', os.path.join(qwc2_path, 'viewers')
+            )
+
+            # try to send custom viewer index '<viewer>.html'
+            filename = '%s.html' % viewer
+            viewer_index_file = safe_join(viewers_path, '%s' % filename)
+            try:
+                if os.path.isfile(viewer_index_file):
+                    self.logger.debug(
+                        "Using custom viewer index '%s'" % filename
+                    )
+                    return send_from_directory(viewers_path, filename)
+                else:
+                    # show FileNotFoundError error
+                    raise Exception(
+                        "[Errno 2] No such file or directory: '%s'" %
+                        viewer_index_file
+                    )
+            except Exception as e:
+                self.logger.error(
+                    "Could not load custom viewer index '%s':\n%s" %
+                    (filename, e)
+                )
+                # fallback to default index
+
+        # send default index
+        return send_from_directory(qwc2_path, 'index.html')
+
+    def qwc2_config(self, identity, viewer=None):
         """Return QWC2 config.json for user.
 
         :param str identity: User identity
+        :param str viewer: Optional custom viewer name (None for default)
         """
         self.logger.debug('Generating config.json for identity: %s', identity)
 
         qwc2_path = os.environ.get('QWC2_PATH', 'qwc2/')
-        configfile = os.environ.get('QWC2_CONFIG',
-                               os.path.join(qwc2_path, 'config.json'))
-        try:
-            with open(configfile, encoding='utf-8') as fh:
-                config = json.load(fh)
-        except Exception as e:
-            return jsonify({"error": "Unable to read config.json: %s" % e})
+
+        config = None
+        if viewer:
+            viewers_path = os.environ.get(
+                'QWC2_VIEWERS_PATH', os.path.join(qwc2_path, 'viewers')
+            )
+
+            # try to load custom viewer config '<viewer>.json'
+            filename = '%s.json' % viewer
+            viewer_config_file = safe_join(viewers_path, '%s' % filename)
+            try:
+                self.logger.debug(
+                    "Using custom viewer config '%s'" % filename
+                )
+                with open(viewer_config_file, encoding='utf-8') as fh:
+                    config = json.load(fh)
+            except Exception as e:
+                self.logger.error(
+                    "Could not load custom viewer config '%s':\n%s" %
+                    (filename, e)
+                )
+                # fallback to default config
+
+        if config is None:
+            # load default config
+            default_config_file = os.environ.get(
+                'QWC2_CONFIG', os.path.join(qwc2_path, 'config.json')
+            )
+            try:
+                with open(default_config_file, encoding='utf-8') as fh:
+                    config = json.load(fh)
+            except Exception as e:
+                self.logger.error(
+                    "Could not load default viewer config:\n%s" % e
+                )
+                return jsonify({"error": "Unable to read config.json"})
 
         config['proxyServiceUrl'] = self.__sanitize_url(os.environ.get('PROXY_SERVICE_URL', config.get('proxyServiceUrl', '')))
         config['permalinkServiceUrl'] = self.__sanitize_url(os.environ.get('PERMALINK_SERVICE_URL', config.get('permalinkServiceUrl', '')))

@@ -26,35 +26,45 @@ qwc2_path = os.environ.get("QWC2_PATH", "qwc2/")
 
 # routes
 @app.route('/')
-def index():
-    return send_from_directory(qwc2_path, 'index.html')
+@app.route('/<viewer>/')
+def index(viewer=None):
+    return qwc2_viewer.qwc2_index(get_jwt_identity(), viewer)
 
 
 @app.route('/config.json')
+@app.route('/<viewer>/config.json')
 @jwt_optional
-def qwc2_config():
-    return qwc2_viewer.qwc2_config(get_jwt_identity())
+def qwc2_config(viewer=None):
+    return qwc2_viewer.qwc2_config(get_jwt_identity(), viewer)
 
 
 @app.route('/themes.json')
+@app.route('/<viewer>/themes.json')
 @jwt_optional
-def qwc2_themes():
+def qwc2_themes(viewer=None):
     return qwc2_viewer.qwc2_themes(get_jwt_identity())
 
 
 @app.route('/assets/<path:path>')
-def qwc2_assets(path):
+@app.route('/<viewer>/assets/<path:path>')
+def qwc2_assets(path, viewer=None):
     return send_from_directory(os.path.join(qwc2_path, 'assets'), path)
 
 
 @app.route('/dist/<path:path>')
-def qwc2_js(path):
+@app.route('/<viewer>/dist/<path:path>')
+def qwc2_js(path, viewer=None):
     return send_from_directory(os.path.join(qwc2_path, 'dist'), path)
 
 
 @app.route('/translations/<path:path>')
 def qwc2_translations(path):
     return send_from_directory(os.path.join(qwc2_path, 'translations'), path)
+
+
+@app.route('/favicon.ico')
+def favicon():
+    return send_from_directory(qwc2_path, 'favicon.ico')
 
 
 @app.route("/proxy", methods=['GET', 'POST', 'PUT', 'DELETE'])
@@ -93,5 +103,5 @@ def proxy():
 
 # local webserver
 if __name__ == '__main__':
-    print("Starting QWC2 service...")
+    print("Starting Map viewer...")
     app.run(host='localhost', port=5030, debug=True)
