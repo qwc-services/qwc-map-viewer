@@ -117,19 +117,30 @@ class QWC2Viewer:
                 )
                 return jsonify({"error": "Unable to read config.json"})
 
-        config['proxyServiceUrl'] = self.__sanitize_url(os.environ.get('PROXY_SERVICE_URL', config.get('proxyServiceUrl', '')))
-        config['permalinkServiceUrl'] = self.__sanitize_url(os.environ.get('PERMALINK_SERVICE_URL', config.get('permalinkServiceUrl', '')))
-        config['elevationServiceUrl'] = self.__sanitize_url(os.environ.get('ELEVATION_SERVICE_URL', config.get('elevationServiceUrl', '')))
-        config['mapInfoService'] = self.__sanitize_url(os.environ.get('MAPINFO_SERVICE_URL', config.get('mapInfoService', '')))
-        config['featureReportService'] = self.__sanitize_url(os.environ.get('DOCUMENT_SERVICE_URL', config.get('featureReportService', '')))
-        config['editServiceUrl'] = self.__sanitize_url(os.environ.get('DATA_SERVICE_URL', config.get('editServiceUrl', '')))
-        config['searchServiceUrl'] = self.__sanitize_url(os.environ.get('SEARCH_SERVICE_URL', config.get('searchServiceUrl', '')))
-        config['authServiceUrl'] = self.__sanitize_url(os.environ.get('AUTH_SERVICE_URL', config.get('authServiceUrl', '')))
-        config['wmsDpi'] = os.environ.get('WMS_DPI', config.get('wmsDpi', '96'))
+        config['proxyServiceUrl'] = self.__sanitize_url(os.environ.get(
+            'PROXY_SERVICE_URL', config.get('proxyServiceUrl', '')))
+        config['permalinkServiceUrl'] = self.__sanitize_url(os.environ.get(
+            'PERMALINK_SERVICE_URL', config.get('permalinkServiceUrl', '')))
+        config['elevationServiceUrl'] = self.__sanitize_url(os.environ.get(
+            'ELEVATION_SERVICE_URL', config.get('elevationServiceUrl', '')))
+        config['mapInfoService'] = self.__sanitize_url(os.environ.get(
+            'MAPINFO_SERVICE_URL', config.get('mapInfoService', '')))
+        config['featureReportService'] = self.__sanitize_url(os.environ.get(
+            'DOCUMENT_SERVICE_URL', config.get('featureReportService', '')))
+        config['editServiceUrl'] = self.__sanitize_url(os.environ.get(
+            'DATA_SERVICE_URL', config.get('editServiceUrl', '')))
+        config['searchServiceUrl'] = self.__sanitize_url(os.environ.get(
+            'SEARCH_SERVICE_URL', config.get('searchServiceUrl', '')))
+        config['authServiceUrl'] = self.__sanitize_url(os.environ.get(
+            'AUTH_SERVICE_URL', config.get('authServiceUrl', '')))
+        config['wmsDpi'] = os.environ.get(
+            'WMS_DPI', config.get('wmsDpi', '96'))
 
         # Look for any Login item, and change it to logout if identity is not None
-        self.__replace_login__helper_plugins(config['plugins']['mobile'], identity)
-        self.__replace_login__helper_plugins(config['plugins']['desktop'], identity)
+        self.__replace_login__helper_plugins(
+            config['plugins']['mobile'], identity)
+        self.__replace_login__helper_plugins(
+            config['plugins']['desktop'], identity)
 
         return jsonify(config)
 
@@ -145,9 +156,11 @@ class QWC2Viewer:
         topbars = filter(lambda entry: entry['name'] == 'TopBar', plugins)
         for topbar in topbars:
             if "menuItems" in topbar["cfg"]:
-                self.__replace_login__helper_items(topbar["cfg"]["menuItems"], identity)
+                self.__replace_login__helper_items(
+                    topbar["cfg"]["menuItems"], identity)
             if "toolbarItems" in topbar["cfg"]:
-                self.__replace_login__helper_items(topbar["cfg"]["toolbarItems"], identity)
+                self.__replace_login__helper_items(
+                    topbar["cfg"]["toolbarItems"], identity)
 
     def __replace_login__helper_items(self, items, identity):
         """Replace Login with Logout if identity is not None on Login items in
@@ -167,10 +180,14 @@ class QWC2Viewer:
         """
         self.logger.debug('Getting themes.json for identity: %s', identity)
 
-        ogc_server_url = os.environ.get('OGC_SERVICE_URL', 'http://localhost:5013/').rstrip('/') + '/'
-        info_service_url = os.environ.get('INFO_SERVICE_URL', ogc_server_url).rstrip('/') + '/'
-        legend_service_url = os.environ.get('LEGEND_SERVICE_URL', ogc_server_url).rstrip('/') + '/'
-        print_service_url = os.environ.get('PRINT_SERVICE_URL', ogc_server_url).rstrip('/') + '/'
+        ogc_server_url = os.environ.get(
+            'OGC_SERVICE_URL', 'http://localhost:5013/').rstrip('/') + '/'
+        info_service_url = os.environ.get(
+            'INFO_SERVICE_URL', ogc_server_url).rstrip('/') + '/'
+        legend_service_url = os.environ.get(
+            'LEGEND_SERVICE_URL', ogc_server_url).rstrip('/') + '/'
+        print_service_url = os.environ.get(
+            'PRINT_SERVICE_URL', ogc_server_url).rstrip('/') + '/'
         themes = self.permission.qwc_permissions(identity)
         if not themes:
             return jsonify({"error": "Failed to generate themes.json"})
