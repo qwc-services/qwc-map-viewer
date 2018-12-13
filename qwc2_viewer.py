@@ -1,7 +1,7 @@
 import os
 
-from flask import json, jsonify, render_template, Response, safe_join, \
-    send_from_directory
+from flask import json, jsonify, redirect, render_template, Response, \
+    safe_join, send_from_directory, url_for
 
 from qwc_services_core.permission import PermissionClient
 
@@ -30,6 +30,12 @@ class QWC2Viewer:
         qwc2_path = os.environ.get('QWC2_PATH', 'qwc2/')
 
         if viewer:
+            # check custom viewer permissions
+            permissions = self.permission.qwc_permissions(identity)
+            if viewer not in permissions.get('viewers', []):
+                # redirect to default viewer if not permitted
+                return redirect(url_for('index'))
+
             viewers_path = os.environ.get(
                 'QWC2_VIEWERS_PATH', os.path.join(qwc2_path, 'viewers')
             )
@@ -71,6 +77,12 @@ class QWC2Viewer:
 
         config = None
         if viewer:
+            # check custom viewer permissions
+            permissions = self.permission.qwc_permissions(identity)
+            if viewer not in permissions.get('viewers', []):
+                # redirect to default config if not permitted
+                return redirect(url_for('qwc2_config'))
+
             viewers_path = os.environ.get(
                 'QWC2_VIEWERS_PATH', os.path.join(qwc2_path, 'viewers')
             )
