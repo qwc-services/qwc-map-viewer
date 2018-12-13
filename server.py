@@ -7,7 +7,8 @@ from flask_jwt_extended import jwt_optional, get_jwt_identity
 
 from qwc_services_core.jwt import jwt_manager
 from qwc2_viewer import QWC2Viewer
-
+from origin_detector import OriginDetector
+import logging
 
 # Flask application
 app = Flask(__name__)
@@ -23,12 +24,18 @@ qwc2_viewer = QWC2Viewer(app.logger)
 # path to QWC2 files and config
 qwc2_path = os.environ.get("QWC2_PATH", "qwc2/")
 
+origin_detector = OriginDetector(
+    app.logger, os.environ.get(
+        "ORIGIN_CONFIG",
+        {'host': {'_intern_': '^127.0.0.1(:\d+)?$'}}))
+
 
 # routes
 @app.route('/')
 @app.route('/<viewer>/')
 def index(viewer=None):
-    return qwc2_viewer.qwc2_index(get_jwt_identity(), viewer)
+    identity = origin_detector.detect(get_jwt_identity(), request)
+    return qwc2_viewer.qwc2_index(identity, viewer)
 
 
 @app.route('/config.json')
@@ -104,4 +111,5 @@ def proxy():
 # local webserver
 if __name__ == '__main__':
     print("Starting Map viewer...")
+    app.logger.setLevel(logging.DEBUG)
     app.run(host='localhost', port=5030, debug=True)
