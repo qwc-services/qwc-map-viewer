@@ -2,7 +2,7 @@ import os
 import requests
 
 from flask import Flask, request, Response, render_template, \
-    abort, send_from_directory, stream_with_context
+    abort, json, send_from_directory, stream_with_context
 from flask_jwt_extended import jwt_optional, get_jwt_identity
 
 from qwc_services_core.jwt import jwt_manager
@@ -24,10 +24,15 @@ qwc2_viewer = QWC2Viewer(app.logger)
 # path to QWC2 files and config
 qwc2_path = os.environ.get("QWC2_PATH", "qwc2/")
 
-origin_detector = OriginDetector(
-    app.logger, os.environ.get(
-        "ORIGIN_CONFIG",
-        {'host': {'_intern_': '^127.0.0.1(:\d+)?$'}}))
+try:
+    origin_config = json.loads(
+        os.environ.get('ORIGIN_CONFIG', '{"host": {"_intern_": "^127.0.0.1(:\\\\d+)?$"}}')
+    )
+except Exception as e:
+    app.logger.error("Could not load ORIGIN_CONFIG:\n%s" % e)
+    origin_config = {}
+
+origin_detector = OriginDetector(app.logger, origin_config)
 
 
 # routes
@@ -42,14 +47,16 @@ def index(viewer=None):
 @app.route('/<viewer>/config.json')
 @jwt_optional
 def qwc2_config(viewer=None):
-    return qwc2_viewer.qwc2_config(get_jwt_identity(), viewer)
+    identity = origin_detector.detect(get_jwt_identity(), request)
+    return qwc2_viewer.qwc2_config(identity, viewer)
 
 
 @app.route('/themes.json')
 @app.route('/<viewer>/themes.json')
 @jwt_optional
 def qwc2_themes(viewer=None):
-    return qwc2_viewer.qwc2_themes(get_jwt_identity())
+    identity = origin_detector.detect(get_jwt_identity(), request)
+    return qwc2_viewer.qwc2_themes(identity)
 
 
 @app.route('/assets/<path:path>')

@@ -47,6 +47,30 @@ A custom `<viewer>.html` could e.g. show a different title and use a custom CSS.
 If a `<viewer>.json` or `<viewer>.html` is missing, the default `config.json` and `index.html` is used instead.
 
 
+### Sign in based on request origin
+
+The `AUTH_SERVICE_URL` is used by default for sign in and sign out.
+
+To differentiate e.g between intranet and internet, identity groups based on request origin and different auth service URLs can be configured:
+
+* `ORIGIN_CONFIG`: JSON with rules configuration
+    ```json
+    {
+        "host": {
+            "<group name>": "<RegEx pattern for host from request>",
+            "_intern_": "^127.0.0.1(:\\\\d+)?$"
+        }
+    }
+    ```
+* `AUTH_SERVICES_CONFIG`: JSON with lookup of auth service URLs for groups (with fallback to `AUTH_SERVICE_URL`)
+    ```json
+    {
+        "<group name>": "<auth service route or URL>",
+        "_intern_": "http://127.0.0.1:5017/"
+    }
+    ```
+
+
 Usage
 -----
 
@@ -73,10 +97,12 @@ Optionally:
  * Set the `MAPINFO_SERVICE_URL` environment variable to the QWC map info service URL.
  * Set the `DOCUMENT_SERVICE_URL` environment variable to the QWC document service URL.
  * Set the `SEARCH_SERVICE_URL` environment variable to the QWC search service URL.
- * Set the `AUTH_SERVICE_URL` environment variable to the QWC auth service URL.
+ * Set the `AUTH_SERVICE_URL` environment variable to the default QWC auth service URL.
  * Set the `INFO_SERVICE_URL` environment variable to the QWC feature info proxy service URL.
  * Set the `LEGEND_SERVICE_URL` environment variable to the QWC legend graphics proxy service URL.
  * Set the `PRINT_SERVICE_URL` environment variable to the QWC print proxy service URL.
+ * Set the `ORIGIN_CONFIG` environment variable to your origin detection rules.
+ * Set the `AUTH_SERVICES_CONFIG` environment variable to your auth service lookups.
 
 
 Base URL:
@@ -115,3 +141,7 @@ Install requirements:
 Start local service:
 
     OGC_SERVICE_URL=http://localhost:5013/ CONFIG_SERVICE_URL=http://localhost:5010/ DATA_SERVICE_URL=http://localhost:5012/ QWC2_PATH=qwc2/ python server.py
+
+Start local service with local auth service config:
+
+    OGC_SERVICE_URL=http://localhost:5013/ CONFIG_SERVICE_URL=http://localhost:5010/ DATA_SERVICE_URL=http://localhost:5012/ QWC2_PATH=qwc2/ AUTH_SERVICES_CONFIG='{"_intern_": "http://127.0.0.1:5017/"}' AUTH_SERVICE_URL=http://localhost:5017/ python server.py

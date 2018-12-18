@@ -34,11 +34,25 @@ class OriginDetector:
                 if expr.match(request.host):
                     groups.append(group)
         self.logger.debug("Assigned groups: %s" % groups)
-        if identity is None:
-            identity = {'username': None}
-        if len(groups) > 0:
-            identity['group'] = groups[0]
+
+        username = None
+        if identity:
+            if isinstance(identity, dict):
+                username = identity.get('username')
+                # NOTE: ignore group from identity
+            else:
+                # identity is username
+                username = identity
+
+        group = None
+        if groups:
+            group = groups[0]
         else:
-            identity['group'] = '_public_'
+            group = '_public_'
+
+        identity = {
+            'username': username,
+            'group': group
+        }
         self.logger.info("identity: %s" % identity)
         return identity

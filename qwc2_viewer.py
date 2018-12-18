@@ -21,10 +21,18 @@ class QWC2Viewer:
 
         self.permission = PermissionClient()
 
+        try:
+            self.auth_services_config = json.loads(
+                os.environ.get('AUTH_SERVICES_CONFIG', '{}')
+            )
+        except Exception as e:
+            app.logger.error("Could not load AUTH_SERVICES_CONFIG:\n%s" % e)
+            self.auth_services_config = {}
+
     def qwc2_index(self, identity, viewer=None):
         """Return QWC2 index.html for user.
 
-        :param str identity: User identity
+        :param obj identity: User identity
         :param str viewer: Optional custom viewer name (None for default)
         """
         qwc2_path = os.environ.get('QWC2_PATH', 'qwc2/')
@@ -68,7 +76,7 @@ class QWC2Viewer:
     def qwc2_config(self, identity, viewer=None):
         """Return QWC2 config.json for user.
 
-        :param str identity: User identity
+        :param obj identity: User identity
         :param str viewer: Optional custom viewer name (None for default)
         """
         self.logger.debug('Generating config.json for identity: %s', identity)
@@ -131,16 +139,25 @@ class QWC2Viewer:
             'DATA_SERVICE_URL', config.get('editServiceUrl', '')))
         config['searchServiceUrl'] = self.__sanitize_url(os.environ.get(
             'SEARCH_SERVICE_URL', config.get('searchServiceUrl', '')))
-        config['authServiceUrl'] = self.__sanitize_url(os.environ.get(
-            'AUTH_SERVICE_URL', config.get('authServiceUrl', '')))
         config['wmsDpi'] = os.environ.get(
             'WMS_DPI', config.get('wmsDpi', '96'))
 
-        # Look for any Login item, and change it to logout if identity is not None
+        # get auth service URL for base group from identity
+        auth_service_url = self.auth_services_config.get(
+            identity.get('group'),
+            # fallback to AUTH_SERVICE_URL then viewer config
+            os.environ.get(
+                'AUTH_SERVICE_URL', config.get('authServiceUrl', '')
+            )
+        )
+        config['authServiceUrl'] = self.__sanitize_url(auth_service_url)
+
+        # Look for any Login item, and change it to logout if user is signed in
+        signed_in = identity.get('username') is not None
         self.__replace_login__helper_plugins(
-            config['plugins']['mobile'], identity)
+            config['plugins']['mobile'], signed_in)
         self.__replace_login__helper_plugins(
-            config['plugins']['desktop'], identity)
+            config['plugins']['desktop'], signed_in)
 
         return jsonify(config)
 
@@ -149,34 +166,40 @@ class QWC2Viewer:
         """
         return (url.rstrip('/') + '/') if url else ""
 
-    def __replace_login__helper_plugins(self, plugins, identity):
+    def __replace_login__helper_plugins(self, plugins, signed_in):
         """Search plugins configurations and call
            self.__replace_login__helper_items on menuItems and toolbarItems
+
+        :param list(obj) plugins: Plugins configurations
+        :param bool signed_in: Whether user is signed in
         """
         topbars = filter(lambda entry: entry['name'] == 'TopBar', plugins)
         for topbar in topbars:
             if "menuItems" in topbar["cfg"]:
                 self.__replace_login__helper_items(
-                    topbar["cfg"]["menuItems"], identity)
+                    topbar["cfg"]["menuItems"], signed_in)
             if "toolbarItems" in topbar["cfg"]:
                 self.__replace_login__helper_items(
-                    topbar["cfg"]["toolbarItems"], identity)
+                    topbar["cfg"]["toolbarItems"], signed_in)
 
-    def __replace_login__helper_items(self, items, identity):
+    def __replace_login__helper_items(self, items, signed_in):
         """Replace Login with Logout if identity is not None on Login items in
            menuItems and toolbarItems.
+
+        :param list(obj) items: Menu or toolbar items
+        :param bool signed_in: Whether user is signed in
         """
         for item in items:
-            if item["key"] == "Login" and identity is not None:
+            if item["key"] == "Login" and signed_in:
                 item["key"] = "Logout"
                 item["icon"] = "logout"
             elif "subitems" in item:
-                self.__replace_login__helper_items(item["subitems"], identity)
+                self.__replace_login__helper_items(item["subitems"], signed_in)
 
     def qwc2_themes(self, identity):
         """Return QWC2 themes.json for user.
 
-        :param str identity: User identity
+        :param obj identity: User identity
         """
         self.logger.debug('Getting themes.json for identity: %s', identity)
 
