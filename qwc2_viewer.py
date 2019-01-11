@@ -83,10 +83,11 @@ class QWC2Viewer:
 
         qwc2_path = os.environ.get('QWC2_PATH', 'qwc2/')
 
+        permissions = self.permission.qwc_permissions(identity)
+
         config = None
         if viewer:
             # check custom viewer permissions
-            permissions = self.permission.qwc_permissions(identity)
             if viewer not in permissions.get('viewers', []):
                 # redirect to default config if not permitted
                 return redirect(url_for('qwc2_config'))
@@ -159,6 +160,15 @@ class QWC2Viewer:
         self.__replace_login__helper_plugins(
             config['plugins']['desktop'], signed_in)
 
+        # filter any restricted viewer task items
+        viewer_task_permissions = permissions.get('viewer_tasks', {})
+        self.__filter_restricted_viewer_tasks(
+            config['plugins']['mobile'], viewer_task_permissions
+        )
+        self.__filter_restricted_viewer_tasks(
+            config['plugins']['desktop'], viewer_task_permissions
+        )
+
         return jsonify(config)
 
     def __sanitize_url(self, url):
@@ -195,6 +205,44 @@ class QWC2Viewer:
                 item["icon"] = "logout"
             elif "subitems" in item:
                 self.__replace_login__helper_items(item["subitems"], signed_in)
+
+    def __filter_restricted_viewer_tasks(self, plugins,
+                                         viewer_task_permissions):
+        """Remove restricted viewer task items from menu and toolbar.
+
+        :param list(obj) plugins: Plugins configurations
+        :param obj viewer_task_permissions: Viewer task permissions as
+                                            {<item key>: <permitted>}
+        """
+        topbars = filter(lambda entry: entry['name'] == 'TopBar', plugins)
+        for key in viewer_task_permissions:
+            if not viewer_task_permissions[key]:
+                for topbar in topbars:
+                    if 'menuItems' in topbar['cfg']:
+                        self.__filter_config_items(
+                            topbar['cfg']['menuItems'], key
+                        )
+                    if 'toolbarItems' in topbar['cfg']:
+                        self.__filter_config_items(
+                            topbar['cfg']['toolbarItems'], key
+                        )
+
+    def __filter_config_items(self, items, key):
+        """Remove items with key from menuItems and toolbarItems.
+
+        :param list(obj) items: Menu or toolbar items
+        :param str key: Item key
+        """
+        items_to_remove = []
+        for item in items:
+            if item['key'] == key:
+                # collect items to remove
+                items_to_remove.append(item)
+            elif 'subitems' in item:
+                self.__filter_config_items(item['subitems'], key)
+
+        for item in items_to_remove:
+            items.remove(item)
 
     def qwc2_themes(self, identity):
         """Return QWC2 themes.json for user.
