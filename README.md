@@ -74,9 +74,9 @@ To differentiate e.g between intranet and internet, identity groups based on req
 Usage
 -----
 
-Set the `QGIS_SERVER_URL` environment variable to the QGIS server URL
-when starting this service. (default: `http://localhost:8001/ows/` on
-qwc-qgis-server container)
+Set the `OGC_SERVICE_URL` environment variable to the QWC OGC service URL (or QGIS server URL)
+when starting this service. (default: `http://localhost:5013/` on
+qwc-ogc-service container)
 
 Set the `CONFIG_SERVICE_URL` environment variable to the QWC Config service URL
 when starting this service. (default: `http://localhost:5010/` on
