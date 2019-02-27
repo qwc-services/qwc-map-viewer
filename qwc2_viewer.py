@@ -274,4 +274,25 @@ class QWC2Viewer:
             # NOTICE: We're updating the permission cache object!
             # del item['wms_name']
 
+        subdirs = themes.get('themes', {}).get('subdirs', [])
+        self.__update_subdir_urls(subdirs, ogc_server_url, info_service_url,
+                                  legend_service_url, print_service_url)
+
         return jsonify(themes)
+
+    def __update_subdir_urls(self, subdirs, ogc_server_url, info_service_url,
+                             legend_service_url, print_service_url):
+        for subdir in subdirs:
+            if 'items' in subdir:
+                for item in subdir['items']:
+                    wms_name = item['wms_name']
+                    item.update({
+                        'url': "%s%s" % (ogc_server_url, wms_name),
+                        'featureInfoUrl': "%s%s" % (info_service_url, wms_name),
+                        'legendUrl': "%s%s" % (legend_service_url, wms_name),
+                        'printUrl': "%s%s" % (print_service_url, wms_name)
+                    })
+            if 'subdirs' in subdir:
+                self.__update_subdir_urls(subdir['subdirs'], ogc_server_url,
+                                          info_service_url, legend_service_url,
+                                          print_service_url)
