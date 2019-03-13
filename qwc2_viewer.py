@@ -168,6 +168,7 @@ class QWC2Viewer:
         self.__filter_restricted_viewer_tasks(
             config['plugins']['desktop'], viewer_task_permissions
         )
+        config['username'] = identity.get('username')
 
         return jsonify(config)
 
