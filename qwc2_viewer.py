@@ -26,7 +26,7 @@ class QWC2Viewer:
                 os.environ.get('AUTH_SERVICES_CONFIG', '{}')
             )
         except Exception as e:
-            app.logger.error("Could not load AUTH_SERVICES_CONFIG:\n%s" % e)
+            self.logger.error("Could not load AUTH_SERVICES_CONFIG:\n%s" % e)
             self.auth_services_config = {}
 
     def qwc2_index(self, identity, viewer=None):
