@@ -215,9 +215,11 @@ class QWC2Viewer:
         :param obj viewer_task_permissions: Viewer task permissions as
                                             {<item key>: <permitted>}
         """
-        topbars = filter(lambda entry: entry['name'] == 'TopBar', plugins)
         for key in viewer_task_permissions:
             if not viewer_task_permissions[key]:
+                topbars = filter(
+                    lambda entry: entry['name'] == 'TopBar', plugins
+                )
                 for topbar in topbars:
                     if 'menuItems' in topbar['cfg']:
                         self.__filter_config_items(
