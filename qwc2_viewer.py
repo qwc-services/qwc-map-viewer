@@ -184,7 +184,7 @@ class QWC2Viewer:
         :param list(obj) plugins: Plugins configurations
         :param bool signed_in: Whether user is signed in
         """
-        topbars = filter(lambda entry: entry['name'] == 'TopBar', plugins)
+        topbars = list(filter(lambda entry: entry['name'] == 'TopBar', plugins))
         for topbar in topbars:
             if "menuItems" in topbar["cfg"]:
                 self.__replace_login__helper_items(
@@ -217,9 +217,9 @@ class QWC2Viewer:
         """
         for key in viewer_task_permissions:
             if not viewer_task_permissions[key]:
-                topbars = filter(
+                topbars = list(filter(
                     lambda entry: entry['name'] == 'TopBar', plugins
-                )
+                ))
                 for topbar in topbars:
                     if 'menuItems' in topbar['cfg']:
                         self.__filter_config_items(
