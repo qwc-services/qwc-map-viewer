@@ -54,6 +54,8 @@ The `AUTH_SERVICE_URL` is used by default for sign in and sign out.
 To differentiate e.g between intranet and internet, identity groups based on request origin and different auth service URLs can be configured:
 
 * `ORIGIN_CONFIG`: JSON with rules configuration
+
+    Match by request host:
     ```json
     {
         "host": {
@@ -62,6 +64,19 @@ To differentiate e.g between intranet and internet, identity groups based on req
         }
     }
     ```
+
+    Match by request IP:
+    ```json
+    {
+        "ip": {
+            "<group name>": "<RegEx pattern for IP from request>",
+            "_intern_": "^127.0.0.\\d{1,3}$"
+        }
+    }
+    ```
+
+    The origin detection can be based on the request host or IP by setting `host` or/and `ip` in `ORIGIN_CONFIG`. The first match is used as the identity group (`_public_` if nothing matched).
+
 * `AUTH_SERVICES_CONFIG`: JSON with lookup of auth service URLs for groups (with fallback to `AUTH_SERVICE_URL`)
     ```json
     {

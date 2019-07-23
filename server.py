@@ -26,7 +26,9 @@ qwc2_path = os.environ.get("QWC2_PATH", "qwc2/")
 
 try:
     origin_config = json.loads(
-        os.environ.get('ORIGIN_CONFIG', '{"host": {"_intern_": "^127.0.0.1(:\\\\d+)?$"}}')
+        os.environ.get(
+            'ORIGIN_CONFIG', '{"host": {"_intern_": "^127.0.0.1(:\\\\d+)?$"}}'
+        )
     )
 except Exception as e:
     app.logger.error("Could not load ORIGIN_CONFIG:\n%s" % e)

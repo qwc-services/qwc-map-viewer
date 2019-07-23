@@ -19,6 +19,9 @@ class OriginDetector:
         if 'host' in self.config:
             for group, expr in self.config['host'].items():
                 self.config['host'][group] = re.compile(expr)
+        if 'ip' in self.config:
+            for group, expr in self.config['ip'].items():
+                self.config['ip'][group] = re.compile(expr)
 
     def detect(self, identity, request):
         """Assign base groups to user identity
@@ -28,11 +31,28 @@ class OriginDetector:
         :param str request: Flask request object
         """
         self.logger.debug("Origin detection with request '%s'" % request)
+
         groups = []
+
         if 'host' in self.config:
+            self.logger.debug("Checking host: %s" % request.host)
             for group, expr in self.config['host'].items():
                 if expr.match(request.host):
                     groups.append(group)
+
+        if 'ip' in self.config:
+            try:
+                self.logger.debug(
+                    "Checking access_route: %s" % request.access_route
+                )
+                # get client IP
+                remote_ip = request.access_route[0]
+            except ValueError:
+                remote_ip = ""
+            for group, expr in self.config['ip'].items():
+                if expr.match(remote_ip):
+                    groups.append(group)
+
         self.logger.debug("Assigned groups: %s" % groups)
 
         username = None
