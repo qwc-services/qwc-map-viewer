@@ -35,6 +35,17 @@ except Exception as e:
 origin_detector = OriginDetector(app.logger, origin_config)
 
 
+def with_no_cache_headers(response):
+    """Add cache-disabling headers to response.
+
+    :param obj response: Response
+    """
+    response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
+    response.headers["Pragma"] = "no-cache"
+    response.headers["Expires"] = "0"
+    return response
+
+
 # routes
 @app.route('/')
 @app.route('/<viewer>/')
@@ -48,7 +59,7 @@ def index(viewer=None):
 @jwt_optional
 def qwc2_config(viewer=None):
     identity = origin_detector.detect(get_jwt_identity(), request)
-    return qwc2_viewer.qwc2_config(identity, viewer)
+    return with_no_cache_headers(qwc2_viewer.qwc2_config(identity, viewer))
 
 
 @app.route('/themes.json')
@@ -56,7 +67,7 @@ def qwc2_config(viewer=None):
 @jwt_optional
 def qwc2_themes(viewer=None):
     identity = origin_detector.detect(get_jwt_identity(), request)
-    return qwc2_viewer.qwc2_themes(identity)
+    return with_no_cache_headers(qwc2_viewer.qwc2_themes(identity))
 
 
 @app.route('/assets/<path:path>')
