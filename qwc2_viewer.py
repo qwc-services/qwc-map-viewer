@@ -281,11 +281,7 @@ class QWC2Viewer:
         self.__update_subdir_urls(subdirs, ogc_server_url, info_service_url,
                                   legend_service_url, print_service_url)
 
-        # remove viewer_tasks and viewers
-        themes.pop('viewer_tasks', None)
-        themes.pop('viewers', None)
-
-        return jsonify(themes)
+        return jsonify({"themes": themes.get('themes', {})})
 
     def __update_subdir_urls(self, subdirs, ogc_server_url, info_service_url,
                              legend_service_url, print_service_url):
