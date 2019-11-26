@@ -39,12 +39,15 @@ The `themesConfig.json` file is used by the Config service to collect the full t
 
 ### Custom viewer configurations
 
-Additional viewer configurations can be added by placing a `<viewer>.json` and/or `<viewer>.html` for each custom viewer into the `$QWC2_VIEWERS_PATH` directory. The custom viewers can be opened by appending the viewer name to the base URL: `http://localhost:5030/<viewer>/`.
+Additional viewer configurations can be added by placing a `<viewer>.json`, `<viewer>_qwc.json` and/or `<viewer>.html` for each custom viewer into the `$QWC2_VIEWERS_PATH` directory. The custom viewers can be opened by appending the viewer name to the base URL: `http://localhost:5030/<viewer>/`.
 
-A custom `<viewer>.json` could e.g. contain a different set of menu items and tools.
+A custom `<viewer>.json` contains the viewer specific themes.
+A custom `<viewer>_qwc.json` could e.g. contain a different set of menu items and tools.
 A custom `<viewer>.html` could e.g. show a different title and use a custom CSS.
 
-If a `<viewer>.json` or `<viewer>.html` is missing, the default `config.json` and `index.html` is used instead.
+If a `<viewer>.json`, `<viewer>_qwc.json` or `<viewer>.html` is missing, the default `themesConfig.json`, `config.json` or `index.html` is used instead.
+
+**NOTE**: `<viewer>_qwc.json` for the viewer config has been renamed from `<viewer>.json` in previous Map Viewer versions (up to 27f0149c8433c70d1de519ffe9f9a8ebff25e32f).
 
 
 ### Sign in based on request origin

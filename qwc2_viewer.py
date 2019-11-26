@@ -39,8 +39,8 @@ class QWC2Viewer:
 
         if viewer:
             # check custom viewer permissions
-            permissions = self.permission.qwc_permissions(identity)
-            if viewer not in permissions.get('viewers', []):
+            viewer_permissions = self.viewer_permissions(identity, viewer)
+            if not viewer_permissions:
                 # redirect to default viewer if not permitted
                 return redirect(url_for('index'))
 
@@ -83,12 +83,11 @@ class QWC2Viewer:
 
         qwc2_path = os.environ.get('QWC2_PATH', 'qwc2/')
 
-        permissions = self.permission.qwc_permissions(identity)
-
         config = None
         if viewer:
             # check custom viewer permissions
-            if viewer not in permissions.get('viewers', []):
+            viewer_permissions = self.viewer_permissions(identity, viewer)
+            if not viewer_permissions:
                 # redirect to default config if not permitted
                 return redirect(url_for('qwc2_config'))
 
@@ -96,8 +95,8 @@ class QWC2Viewer:
                 'QWC2_VIEWERS_PATH', os.path.join(qwc2_path, 'viewers')
             )
 
-            # try to load custom viewer config '<viewer>.json'
-            filename = '%s.json' % viewer
+            # try to load custom viewer config '<viewer>_qwc.json'
+            filename = '%s_qwc.json' % viewer
             viewer_config_file = safe_join(viewers_path, '%s' % filename)
             try:
                 self.logger.debug(
@@ -125,6 +124,9 @@ class QWC2Viewer:
                     "Could not load default viewer config:\n%s" % e
                 )
                 return jsonify({"error": "Unable to read config.json"})
+
+        # preload QWC permissions
+        permissions = self.permission.qwc_permissions(identity, viewer)
 
         config['proxyServiceUrl'] = self.__sanitize_url(os.environ.get(
             'PROXY_SERVICE_URL', config.get('proxyServiceUrl', '')))
@@ -247,10 +249,11 @@ class QWC2Viewer:
         for item in items_to_remove:
             items.remove(item)
 
-    def qwc2_themes(self, identity):
+    def qwc2_themes(self, identity, viewer=None):
         """Return QWC2 themes.json for user.
 
         :param obj identity: User identity
+        :param str viewer: Optional custom viewer name (None for default)
         """
         self.logger.debug('Getting themes.json for identity: %s', identity)
 
@@ -262,7 +265,15 @@ class QWC2Viewer:
             'LEGEND_SERVICE_URL', ogc_server_url).rstrip('/') + '/'
         print_service_url = os.environ.get(
             'PRINT_SERVICE_URL', ogc_server_url).rstrip('/') + '/'
-        themes = self.permission.qwc_permissions(identity)
+
+        if viewer:
+            # check custom viewer permissions
+            viewer_permissions = self.viewer_permissions(identity, viewer)
+            if not viewer_permissions:
+                # redirect to default themes if not permitted
+                return redirect(url_for('qwc2_themes'))
+
+        themes = self.permission.qwc_permissions(identity, viewer)
         if not themes:
             return jsonify({"error": "Failed to generate themes.json"})
         for item in themes.get('themes', {}).get('items', []):
@@ -299,3 +310,13 @@ class QWC2Viewer:
                 self.__update_subdir_urls(subdir['subdirs'], ogc_server_url,
                                           info_service_url, legend_service_url,
                                           print_service_url)
+
+    def viewer_permissions(self, identity, viewer=None):
+        """Return permitted viewer resources.
+
+        :param obj identity: User name or Identity dict
+        :param str viewer: Optional custom viewer name (None for default)
+        """
+        return self.permission.resource_permissions(
+            'viewer', identity, name=viewer
+        )

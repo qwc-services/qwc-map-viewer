@@ -2,4 +2,4 @@ Flask==1.0.2
 flask-jwt-extended==3.5.1
 flask-restplus==0.12.1
 requests==2.21.0
-git+https://github.com/qwc-services/qwc-services-core.git#egg=qwc-services-core
+git+https://github.com/qwc-services/qwc-services-core.git@b589e3dc3e20d221d59f7ee10226a46d1b60b9f9#egg=qwc-services-core

@@ -69,7 +69,7 @@ def qwc2_config(viewer=None):
 @jwt_optional
 def qwc2_themes(viewer=None):
     identity = origin_detector.detect(get_jwt_identity(), request)
-    return with_no_cache_headers(qwc2_viewer.qwc2_themes(identity))
+    return with_no_cache_headers(qwc2_viewer.qwc2_themes(identity, viewer))
 
 
 @app.route('/assets/<path:path>')
