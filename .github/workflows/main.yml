@@ -7,10 +7,6 @@ jobs:
       runs-on: ubuntu-latest
       steps:
 
-      - name: Define user which will be used to push to Docker Hub
-        id: get_dockerhub_username
-        run: echo ::set-output name=username::sourcepole
-
       - uses: actions/checkout@master
 
       - name: Get version tag
@@ -27,7 +23,7 @@ jobs:
         env:
           QWC2_URL: https://github.com/qgis/qwc2-demo-app/releases/download/ci-latest-master/qwc2-demo-app.zip
         with:
-          name: ${{ steps.get_dockerhub_username.outputs.username }}/${{ github.event.repository.name }}
+          name: sourcepole/${{ github.event.repository.name }}
           username: ${{ secrets.DOCKER_HUB_USER }}
           password: ${{ secrets.DOCKER_HUB_PASSWORD }}
           tags: "${{ steps.get_tag.outputs.tag }}"
