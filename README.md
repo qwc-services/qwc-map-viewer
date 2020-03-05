@@ -7,75 +7,6 @@ Provide a [QWC2 Web Client](https://github.com/qgis/qwc2-demo-app) application u
 QWC Config service running on `$CONFIG_SERVICE_URL` and a QWC Data service running on
 `$DATA_SERVICE_URL`
 
-
-Docker usage
-------------
-
-### Run docker image
-
-To run this docker image you will need the following three additional services:
-
-* qwc-qgis-server
-* qwc-data-service
-* qwc-ogc-service
-* qwc-config-service
-
-Those services can be found under https://github.com/qwc-services/. The following steps explain how to download those services and how to run the `qwc-map-viewer` with them.
-
-**Step 1: Clone qwc-docker**
-
-    git clone https://github.com/qwc-services/qwc-docker
-    cd qwc-docker
-
-**Step 2: Create docker-compose.yml file**
-
-    cp docker-compose-example.yml docker-compose.yml
-
-Remove all docker images except:
-
-* qwc-map-viewer
-* qwc-qgis-server
-* qwc-data-service
-* qwc-ogc-service
-* qwc-config-service
-
-**Step 3: Choose between a version of the qwc-map-viewer**
-
-#### qwc-map-viewer-demo
-
-This is the demo version used in the `docker-compose-example.yml` file. With this version, the docker image comes with a preinstalled version of the latest qwc2-demo-app build and the python application for the viewer. Use this docker image, if you don't have your own build of the QWC2 app.
-
-#### qwc-map-viewer-base
-
-If you want to use your own QWC2 build then this is the docker image that you want to use. This docker image comes with only the python application installed on. Here is an example, on how you can add you own QWC2 build to the docker image:
-
-```
-qwc-map-viewer:
-    image: sourcepole/qwc-map-viewer-base
-    environment:
-        - CONFIG_SERVICE_URL=http://qwc-config-service:9090/
-        - QWC2_PATH=/qwc2/
-        - QWC2_CONFIG=/qwc2/config.json
-        - OGC_SERVICE_URL=/ows/
-        - DATA_SERVICE_URL=/api/v1/data/
-    ports:
-        - "127.0.0.1:5030:9090"
-    # Here you mount your own QWC2 build
-    volumes:
-    - /PATH_TO_QWC2_BUILD/:/qwc2:ro
-    depends_on:
-        - qwc-config-service
-        - qwc-ogc-service
-        - qwc-data-service
-```
-**Step 4: Build docker containers**
-
-    docker-compose build
-
-**Step 5: Start docker containers**
-
-    docker-compose up
-
 Setup
 -----
 
@@ -204,6 +135,69 @@ Sample requests:
     curl 'http://localhost:5030/config.json'
     curl 'http://localhost:5030/themes.json'
 
+
+Docker usage
+------------
+
+### Run docker image
+
+To run this docker image you will need the following three additional services:
+
+* qwc-postgis
+* qwc-qgis-server
+* qwc-config-service
+* qwc-ogc-service
+* qwc-data-service
+
+Those services can be found under https://github.com/qwc-services/. The following steps explain how to download those services and how to run the `qwc-map-viewer` with `docker-compose`.
+
+**Step 1: Clone qwc-docker**
+
+    git clone https://github.com/qwc-services/qwc-docker
+    cd qwc-docker
+
+**Step 2: Create docker-compose.yml file**
+
+    cp docker-compose-example.yml docker-compose.yml
+
+**Step 3: Choose between a version of the qwc-map-viewer**
+
+#### qwc-map-viewer-demo
+
+This is the demo version used in the `docker-compose-example.yml` file. With this version, the docker image comes with a preinstalled version of the latest qwc2-demo-app build and the python application for the viewer. Use this docker image, if you don't have your own build of the QWC2 app.
+
+#### qwc-map-viewer-base
+
+If you want to use your own QWC2 build then this is the docker image that you want to use. This docker image comes with only the python application installed on. Here is an example, on how you can add you own QWC2 build to the docker image:
+
+```
+qwc-map-viewer:
+    image: sourcepole/qwc-map-viewer-base
+    environment:
+        - CONFIG_SERVICE_URL=http://qwc-config-service:9090/
+        - QWC2_PATH=/qwc2/
+        - QWC2_CONFIG=/qwc2/config.json
+        - OGC_SERVICE_URL=/ows/
+        - DATA_SERVICE_URL=/api/v1/data/
+    ports:
+        - "127.0.0.1:5030:9090"
+    # Here you mount your own QWC2 build
+    volumes:
+    - /PATH_TO_QWC2_BUILD/:/qwc2:ro
+    depends_on:
+      - qwc-config-service
+      - qwc-ogc-service
+      - qwc-data-service
+```
+**Step 4: Build docker containers**
+
+    docker-compose build
+
+**Step 5: Start docker containers**
+
+    docker-compose up qwc-map-viewer
+
+For more information please visit: https://github.com/qwc-services/qwc-docker
 
 Development
 -----------
