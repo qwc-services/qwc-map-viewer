@@ -22,10 +22,15 @@ class QWC2Viewer:
         self.tenant = tenant
         self.logger = logger
 
+        config_handler = RuntimeConfig("mapViewer", logger)
+        config = config_handler.tenant_config(tenant)
+
         # get config dir for tenant
         self.config_dir = os.path.dirname(
             RuntimeConfig.config_file_path('mapViewer', tenant)
         )
+
+        self.resources = self.load_resources(config)
 
         self.permission = PermissionClient()
 
@@ -55,60 +60,18 @@ class QWC2Viewer:
         self.logger.debug("Using index '%s'" % viewer_index_file)
         return send_from_directory(self.config_dir, 'index.html')
 
-    def qwc2_config(self, identity, viewer=None):
+    def qwc2_config(self, identity):
         """Return QWC2 config.json for user.
 
         :param obj identity: User identity
-        :param str viewer: Optional custom viewer name (None for default)
         """
         self.logger.debug('Generating config.json for identity: %s', identity)
 
-        qwc2_path = os.environ.get('QWC2_PATH', 'qwc2/')
-
-        config = None
-        if viewer:
-            # check custom viewer permissions
-            viewer_permissions = self.viewer_permissions(identity, viewer)
-            if not viewer_permissions:
-                # redirect to default config if not permitted
-                return redirect(url_for('qwc2_config'))
-
-            viewers_path = os.environ.get(
-                'QWC2_VIEWERS_PATH', os.path.join(qwc2_path, 'viewers')
-            )
-
-            # try to load custom viewer config '<viewer>_qwc.json'
-            filename = '%s_qwc.json' % viewer
-            viewer_config_file = safe_join(viewers_path, '%s' % filename)
-            try:
-                self.logger.debug(
-                    "Using custom viewer config '%s'" % filename
-                )
-                with open(viewer_config_file, encoding='utf-8') as fh:
-                    config = json.load(fh)
-            except Exception as e:
-                self.logger.error(
-                    "Could not load custom viewer config '%s':\n%s" %
-                    (filename, e)
-                )
-                # fallback to default config
-
-        if config is None:
-            # load default config
-            default_config_file = os.environ.get(
-                'QWC2_CONFIG', os.path.join(qwc2_path, 'config.json')
-            )
-            try:
-                with open(default_config_file, encoding='utf-8') as fh:
-                    config = json.load(fh)
-            except Exception as e:
-                self.logger.error(
-                    "Could not load default viewer config:\n%s" % e
-                )
-                return jsonify({"error": "Unable to read config.json"})
+        # deep copy qwc2_config
+        config = json.loads(json.dumps(self.resources['qwc2_config']))
 
         # preload QWC permissions
-        permissions = self.permission.qwc_permissions(identity, viewer)
+        permissions = self.permission.qwc_permissions(identity)
 
         config['proxyServiceUrl'] = self.__sanitize_url(os.environ.get(
             'PROXY_SERVICE_URL', config.get('proxyServiceUrl', '')))
@@ -302,3 +265,15 @@ class QWC2Viewer:
         return self.permission.resource_permissions(
             'viewer', identity, name=viewer
         )
+
+    def load_resources(self, config):
+        """Load service resources from config.
+
+        :param RuntimeConfig config: Config handler
+        """
+        # load QWC2 application config
+        qwc2_config = config.resources().get('qwc2_config', {})
+
+        return {
+            'qwc2_config': qwc2_config
+        }

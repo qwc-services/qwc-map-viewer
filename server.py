@@ -73,12 +73,11 @@ def index():
 
 
 @app.route('/config.json')
-@app.route('/<viewer>/config.json')
 @jwt_optional
-def qwc2_config(viewer=None):
+def qwc2_config():
     identity = origin_detector.detect(get_jwt_identity(), request)
     qwc2_viewer = qwc2_viewer_handler(identity)
-    return with_no_cache_headers(qwc2_viewer.qwc2_config(identity, viewer))
+    return with_no_cache_headers(qwc2_viewer.qwc2_config(identity))
 
 
 @app.route('/themes.json')

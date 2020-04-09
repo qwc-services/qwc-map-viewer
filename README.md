@@ -5,6 +5,8 @@ Provide a [QWC2 Web Client](https://github.com/qgis/qwc2-demo-app) application u
 
 **v2** (WIP): add support for multitenancy and replace QWC Config service and QWC2 config files with static config and permission files.
 
+**Note:**: Custom viewers have been replaced by tenants in v2.
+
 **Note:** requires a QWC OGC service or QGIS server running on `$OGC_SERVICE_URL`, a
 QWC Config service running on `$CONFIG_SERVICE_URL` and a QWC Data service running on
 `$DATA_SERVICE_URL`
@@ -35,7 +37,26 @@ Configuration
 The static config and permission files are stored as JSON files in `$CONFIG_PATH` with subdirectories for each tenant,
 e.g. `$CONFIG_PATH/default/*.json`. The default tenant name is `default`.
 
-Configure the QWC2 application using your `config.json` file (see [Documentation](https://github.com/qgis/qwc2-demo-app/blob/master/doc/QWC2_Documentation.md#application-configuration-the-configjson-and-jsappconfigjs-files)).
+
+### Map Viewer config
+
+* File location: `$CONFIG_PATH/<tenant>/mapViewerConfig.json`
+
+Example:
+```json
+{
+  "service": "map-viewer",
+  "config": {
+  },
+  "resources": {
+    "qwc2_config": {
+        // contents from QWC2 config.json
+    }
+  }
+}
+```
+
+`qwc2_config` contains the QWC2 application config, corresponding to the contents of your standalone `config.json` file (see [Documentation](https://github.com/qgis/qwc2-demo-app/blob/master/doc/QWC2_Documentation.md#application-configuration-the-configjson-and-jsappconfigjs-files)).
 
 Add new themes to your `themesConfig.json` (see [Documentation](https://github.com/qgis/qwc2-demo-app/blob/master/doc/QWC2_Documentation.md#theme-configuration-qgis-projects-and-the-themesconfigjson-file)) and put any theme thumbnails into `$QWC2_PATH/assets/img/mapthumbs/`.
 The `themesConfig.json` file is used by the Config service to collect the full themes configuration using GetProjectSettings.
