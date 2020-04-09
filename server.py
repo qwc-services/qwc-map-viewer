@@ -1,15 +1,14 @@
+import logging
 import os
 import requests
 
-from flask import Flask, request, Response, render_template, \
-    abort, json, send_from_directory, stream_with_context
+from flask import json, Flask, request, send_from_directory
 from flask_jwt_extended import jwt_optional, get_jwt_identity
 
 from qwc_services_core.jwt import jwt_manager
 from qwc_services_core.tenant_handler import TenantHandler
-from qwc2_viewer import QWC2Viewer
 from origin_detector import OriginDetector
-import logging
+from qwc2_viewer import QWC2Viewer
 
 
 # Flask application
@@ -108,40 +107,6 @@ def qwc2_translations(path):
 @app.route('/favicon.ico')
 def favicon():
     return send_from_directory(qwc2_path, 'favicon.ico')
-
-
-@app.route("/proxy", methods=['GET', 'POST', 'PUT', 'DELETE'])
-def proxy():
-    """Proxy
-    proxy?url=<url>&filename=<filename>
-    url: the url to proxy
-    filename: optional, if set it sets a content-disposition header with the
-              specified filename
-    """
-    if not app.debug:  # Allow only in debug mode
-        abort(403)
-    url = request.args.get('url')
-    filename = request.args.get('filename')
-    if request.method == 'POST':
-        headers = {'content-type': request.headers['content-type']}
-        res = requests.post(url, stream=True, timeout=30,
-                            data=request.get_data(), headers=headers)
-    elif request.method == 'PUT':
-        headers = {'content-type': request.headers['content-type']}
-        res = requests.put(url, stream=True, timeout=30,
-                           data=request.get_data(), headers=headers)
-    elif request.method == 'DELETE':
-        res = requests.delete(url, stream=True, timeout=10)
-    elif request.method == 'GET':
-        res = requests.get(url, stream=True, timeout=10)
-    else:
-        raise "Invalid operation"
-    response = Response(stream_with_context(res.iter_content(chunk_size=1024)),
-                        status=res.status_code)
-    if filename:
-        response.headers['content-disposition'] = 'filename=' + filename
-    response.headers['content-type'] = res.headers['content-type']
-    return response
 
 
 # local webserver
