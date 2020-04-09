@@ -23,6 +23,9 @@ class QWC2Viewer:
         config_handler = RuntimeConfig("mapViewer", logger)
         config = config_handler.tenant_config(tenant)
 
+        # path to QWC2 files
+        self.qwc2_path = config.get('qwc2_path', 'qwc2/')
+
         # get config dir for tenant
         self.config_dir = os.path.dirname(
             RuntimeConfig.config_file_path('mapViewer', tenant)
@@ -244,6 +247,35 @@ class QWC2Viewer:
                 self.__update_subdir_urls(subdir['subdirs'], ogc_server_url,
                                           info_service_url, legend_service_url,
                                           print_service_url)
+
+    def qwc2_assets(self, path):
+        """Return QWC2 asset from assets/.
+
+        :param str path: Asset path
+        """
+        return send_from_directory(
+            os.path.join(self.qwc2_path, 'assets'), path
+        )
+
+    def qwc2_js(self, path):
+        """Return QWC2 Javascript from dist/.
+
+        :param str path: Asset path
+        """
+        return send_from_directory(os.path.join(self.qwc2_path, 'dist'), path)
+
+    def qwc2_translations(self, path):
+        """Return QWC2 translation file from translations/.
+
+        :param str path: Asset path
+        """
+        return send_from_directory(
+            os.path.join(self.qwc2_path, 'translations'), path
+        )
+
+    def qwc2_favicon(self):
+        """Return default favicon."""
+        return send_from_directory(self.qwc2_path, 'favicon.ico')
 
     def load_resources(self, config):
         """Load service resources from config.

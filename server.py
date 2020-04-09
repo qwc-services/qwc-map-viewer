@@ -2,7 +2,7 @@ import logging
 import os
 import requests
 
-from flask import json, Flask, request, send_from_directory
+from flask import json, Flask, request
 from flask_jwt_extended import jwt_optional, get_jwt_identity
 
 from qwc_services_core.jwt import jwt_manager
@@ -35,9 +35,6 @@ def qwc2_viewer_handler(identity):
             'qwc', tenant, QWC2Viewer(tenant, app.logger))
     return handler
 
-
-# path to QWC2 files and config
-qwc2_path = os.environ.get("QWC2_PATH", "qwc2/")
 
 try:
     origin_config = json.loads(
@@ -88,25 +85,27 @@ def qwc2_themes():
 
 
 @app.route('/assets/<path:path>')
-@app.route('/<viewer>/assets/<path:path>')
-def qwc2_assets(path, viewer=None):
-    return send_from_directory(os.path.join(qwc2_path, 'assets'), path)
+def qwc2_assets(path):
+    qwc2_viewer = qwc2_viewer_handler(get_jwt_identity())
+    return qwc2_viewer.qwc2_assets(path)
 
 
 @app.route('/dist/<path:path>')
-@app.route('/<viewer>/dist/<path:path>')
-def qwc2_js(path, viewer=None):
-    return send_from_directory(os.path.join(qwc2_path, 'dist'), path)
+def qwc2_js(path):
+    qwc2_viewer = qwc2_viewer_handler(get_jwt_identity())
+    return qwc2_viewer.qwc2_js(path)
 
 
 @app.route('/translations/<path:path>')
 def qwc2_translations(path):
-    return send_from_directory(os.path.join(qwc2_path, 'translations'), path)
+    qwc2_viewer = qwc2_viewer_handler(get_jwt_identity())
+    return qwc2_viewer.qwc2_translations(path)
 
 
 @app.route('/favicon.ico')
 def favicon():
-    return send_from_directory(qwc2_path, 'favicon.ico')
+    qwc2_viewer = qwc2_viewer_handler(get_jwt_identity())
+    return qwc2_viewer.qwc2_favicon()
 
 
 # local webserver

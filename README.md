@@ -46,6 +46,7 @@ Example:
 {
   "service": "map-viewer",
   "config": {
+    "qwc2_path": "qwc2/"
   },
   "resources": {
     "qwc2_config": {
@@ -114,11 +115,8 @@ Set the `OGC_SERVICE_URL` environment variable to the QWC OGC service URL (or QG
 when starting this service. (default: `http://localhost:5013/` on
 qwc-ogc-service container)
 
-Set the `QWC2_PATH` environment variable to your QWC2 files path.
-
 Optionally:
 
- * Set the `QWC2_CONFIG` environment variable to your QWC2 `config.json` path if it is not located in `$QWC2_PATH`.
  * Set the `DATA_SERVICE_URL` environment variable to the QWC Data service URL.
  * Set the `PERMALINK_SERVICE_URL` environment variable to the QWC permalink service URL.
  * Set the `ELEVATION_SERVICE_URL` environment variable to the QWC elevation service URL.
@@ -228,8 +226,8 @@ Install requirements:
 
 Start local service:
 
-    CONFIG_PATH=/PATH/TO/CONFIGS/ OGC_SERVICE_URL=http://localhost:5013/ DATA_SERVICE_URL=http://localhost:5012/ QWC2_PATH=qwc2/ python server.py
+    CONFIG_PATH=/PATH/TO/CONFIGS/ OGC_SERVICE_URL=http://localhost:5013/ DATA_SERVICE_URL=http://localhost:5012/ python server.py
 
 Start local service with local auth service config:
 
-    CONFIG_PATH=/PATH/TO/CONFIGS/ OGC_SERVICE_URL=http://localhost:5013/ DATA_SERVICE_URL=http://localhost:5012/ QWC2_PATH=qwc2/ AUTH_SERVICES_CONFIG='{"_intern_": "http://127.0.0.1:5017/"}' AUTH_SERVICE_URL=http://localhost:5017/ python server.py
+    CONFIG_PATH=/PATH/TO/CONFIGS/ OGC_SERVICE_URL=http://localhost:5013/ DATA_SERVICE_URL=http://localhost:5012/ AUTH_SERVICES_CONFIG='{"_intern_": "http://127.0.0.1:5017/"}' AUTH_SERVICE_URL=http://localhost:5017/ python server.py
