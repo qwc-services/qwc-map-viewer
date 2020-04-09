@@ -7,9 +7,8 @@ Provide a [QWC2 Web Client](https://github.com/qgis/qwc2-demo-app) application u
 
 **Note:**: Custom viewers have been replaced by tenants in v2.
 
-**Note:** requires a QWC OGC service or QGIS server running on `$OGC_SERVICE_URL`, a
-QWC Config service running on `$CONFIG_SERVICE_URL` and a QWC Data service running on
-`$DATA_SERVICE_URL`
+**Note:** Requires a QWC OGC service or QGIS server running on `$OGC_SERVICE_URL`. Additional QWC Services are optional.
+
 
 Setup
 -----
@@ -43,7 +42,7 @@ e.g. `$CONFIG_PATH/default/*.json`. The default tenant name is `default`.
 * File location: `$CONFIG_PATH/<tenant>/mapViewerConfig.json`
 
 Example:
-```json
+```jsonc
 {
   "service": "map-viewer",
   "config": {
@@ -64,7 +63,7 @@ Example:
 `qwc2_themes` contains the full themes configuration, mostly corresponding to the `themes.json` collected from `themesConfig.json`.
 
 Add new themes to your `themesConfig.json` (see [Documentation](https://github.com/qgis/qwc2-demo-app/blob/master/doc/QWC2_Documentation.md#theme-configuration-qgis-projects-and-the-themesconfigjson-file)) and put any theme thumbnails into `$QWC2_PATH/assets/img/mapthumbs/`.
-The `themesConfig.json` file is used by the Config service to collect the full themes configuration using GetProjectSettings.
+The `themesConfig.json` file is used to collect the full themes configuration using GetProjectSettings.
 
 
 ### Sign in based on request origin
@@ -115,19 +114,12 @@ Set the `OGC_SERVICE_URL` environment variable to the QWC OGC service URL (or QG
 when starting this service. (default: `http://localhost:5013/` on
 qwc-ogc-service container)
 
-Set the `CONFIG_SERVICE_URL` environment variable to the QWC Config service URL
-when starting this service. (default: `http://localhost:5010/` on
-qwc-config-service container)
-
-Set the `DATA_SERVICE_URL` environment variable to the QWC Data service URL
-when starting this service. (default: `http://localhost:5012/` on
-qwc-data-service container)
-
 Set the `QWC2_PATH` environment variable to your QWC2 files path.
 
 Optionally:
 
  * Set the `QWC2_CONFIG` environment variable to your QWC2 `config.json` path if it is not located in `$QWC2_PATH`.
+ * Set the `DATA_SERVICE_URL` environment variable to the QWC Data service URL.
  * Set the `PERMALINK_SERVICE_URL` environment variable to the QWC permalink service URL.
  * Set the `ELEVATION_SERVICE_URL` environment variable to the QWC elevation service URL.
  * Set the `MAPINFO_SERVICE_URL` environment variable to the QWC map info service URL.
@@ -144,10 +136,6 @@ Optionally:
 Base URL:
 
     http://localhost:5030/
-
-Custom viewer URL:
-
-    http://localhost:5030/<viewer>/
 
 Sample requests:
 
@@ -218,6 +206,7 @@ qwc-map-viewer:
 
 For more information please visit: https://github.com/qwc-services/qwc-docker
 
+
 Development
 -----------
 
@@ -239,8 +228,8 @@ Install requirements:
 
 Start local service:
 
-    CONFIG_PATH=/PATH/TO/CONFIGS/ OGC_SERVICE_URL=http://localhost:5013/ CONFIG_SERVICE_URL=http://localhost:5010/ DATA_SERVICE_URL=http://localhost:5012/ QWC2_PATH=qwc2/ python server.py
+    CONFIG_PATH=/PATH/TO/CONFIGS/ OGC_SERVICE_URL=http://localhost:5013/ DATA_SERVICE_URL=http://localhost:5012/ QWC2_PATH=qwc2/ python server.py
 
 Start local service with local auth service config:
 
-    CONFIG_PATH=/PATH/TO/CONFIGS/ OGC_SERVICE_URL=http://localhost:5013/ CONFIG_SERVICE_URL=http://localhost:5010/ DATA_SERVICE_URL=http://localhost:5012/ QWC2_PATH=qwc2/ AUTH_SERVICES_CONFIG='{"_intern_": "http://127.0.0.1:5017/"}' AUTH_SERVICE_URL=http://localhost:5017/ python server.py
+    CONFIG_PATH=/PATH/TO/CONFIGS/ OGC_SERVICE_URL=http://localhost:5013/ DATA_SERVICE_URL=http://localhost:5012/ QWC2_PATH=qwc2/ AUTH_SERVICES_CONFIG='{"_intern_": "http://127.0.0.1:5017/"}' AUTH_SERVICE_URL=http://localhost:5017/ python server.py

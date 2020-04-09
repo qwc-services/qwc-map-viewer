@@ -1,9 +1,7 @@
 import os
 
-from flask import json, jsonify, redirect, render_template, Response, \
-    safe_join, send_from_directory, url_for
+from flask import json, jsonify, send_from_directory
 
-from qwc_services_core.permission import PermissionClient
 from qwc_services_core.runtime_config import RuntimeConfig
 
 
@@ -31,8 +29,6 @@ class QWC2Viewer:
         )
 
         self.resources = self.load_resources(config)
-
-        self.permission = PermissionClient()
 
         try:
             self.auth_services_config = json.loads(
@@ -70,8 +66,7 @@ class QWC2Viewer:
         # deep copy qwc2_config
         config = json.loads(json.dumps(self.resources['qwc2_config']))
 
-        # preload QWC permissions
-        permissions = self.permission.qwc_permissions(identity)
+        # TODO: filter by permissions
 
         config['proxyServiceUrl'] = self.__sanitize_url(os.environ.get(
             'PROXY_SERVICE_URL', config.get('proxyServiceUrl', '')))
@@ -107,8 +102,8 @@ class QWC2Viewer:
         self.__replace_login__helper_plugins(
             config['plugins']['desktop'], signed_in)
 
-        # filter any restricted viewer task items
-        viewer_task_permissions = permissions.get('viewer_tasks', {})
+        # TODO: filter any restricted viewer task items
+        viewer_task_permissions = {}
         self.__filter_restricted_viewer_tasks(
             config['plugins']['mobile'], viewer_task_permissions
         )
