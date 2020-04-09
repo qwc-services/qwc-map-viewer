@@ -1,7 +1,9 @@
-QWC Map Viewer
-==============
+QWC Map Viewer v2
+=================
 
 Provide a [QWC2 Web Client](https://github.com/qgis/qwc2-demo-app) application using QWC services.
+
+**v2** (WIP): add support for multitenancy and replace QWC Config service and QWC2 config files with static config and permission files.
 
 **Note:** requires a QWC OGC service or QGIS server running on `$OGC_SERVICE_URL`, a
 QWC Config service running on `$CONFIG_SERVICE_URL` and a QWC Data service running on

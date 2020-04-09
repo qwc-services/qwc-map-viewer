@@ -12,11 +12,13 @@ class QWC2Viewer:
     Provide configurations for QWC2 map viewer.
     """
 
-    def __init__(self, logger):
+    def __init__(self, tenant, logger):
         """Constructor
 
+        :param str tenant: Tenant ID
         :param Logger logger: Application logger
         """
+        self.tenant = tenant
         self.logger = logger
 
         self.permission = PermissionClient()

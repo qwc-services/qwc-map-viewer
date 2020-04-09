@@ -6,9 +6,11 @@ from flask import Flask, request, Response, render_template, \
 from flask_jwt_extended import jwt_optional, get_jwt_identity
 
 from qwc_services_core.jwt import jwt_manager
+from qwc_services_core.tenant_handler import TenantHandler
 from qwc2_viewer import QWC2Viewer
 from origin_detector import OriginDetector
 import logging
+
 
 # Flask application
 app = Flask(__name__)
@@ -18,8 +20,22 @@ app.config['ERROR_404_HELP'] = False
 # Setup the Flask-JWT-Extended extension
 jwt = jwt_manager(app)
 
-# create QWC service
-qwc2_viewer = QWC2Viewer(app.logger)
+# create tenant handler
+tenant_handler = TenantHandler(app.logger)
+
+
+def qwc2_viewer_handler(identity):
+    """Get or create a QWC2Viewer instance for a tenant.
+
+    :param str identity: User identity
+    """
+    tenant = tenant_handler.tenant(identity)
+    handler = tenant_handler.handler('mapViewer', 'qwc', tenant)
+    if handler is None:
+        handler = tenant_handler.register_handler(
+            'qwc', tenant, QWC2Viewer(tenant, app.logger))
+    return handler
+
 
 # path to QWC2 files and config
 qwc2_path = os.environ.get("QWC2_PATH", "qwc2/")
@@ -53,6 +69,7 @@ def with_no_cache_headers(response):
 @app.route('/<viewer>/')
 def index(viewer=None):
     identity = origin_detector.detect(get_jwt_identity(), request)
+    qwc2_viewer = qwc2_viewer_handler(identity)
     return qwc2_viewer.qwc2_index(identity, viewer)
 
 
@@ -61,6 +78,7 @@ def index(viewer=None):
 @jwt_optional
 def qwc2_config(viewer=None):
     identity = origin_detector.detect(get_jwt_identity(), request)
+    qwc2_viewer = qwc2_viewer_handler(identity)
     return with_no_cache_headers(qwc2_viewer.qwc2_config(identity, viewer))
 
 
@@ -69,6 +87,7 @@ def qwc2_config(viewer=None):
 @jwt_optional
 def qwc2_themes(viewer=None):
     identity = origin_detector.detect(get_jwt_identity(), request)
+    qwc2_viewer = qwc2_viewer_handler(identity)
     return with_no_cache_headers(qwc2_viewer.qwc2_themes(identity, viewer))
 
 
