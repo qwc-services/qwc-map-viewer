@@ -4,6 +4,7 @@ from flask import json, jsonify, redirect, render_template, Response, \
     safe_join, send_from_directory, url_for
 
 from qwc_services_core.permission import PermissionClient
+from qwc_services_core.runtime_config import RuntimeConfig
 
 
 class QWC2Viewer:
@@ -21,6 +22,11 @@ class QWC2Viewer:
         self.tenant = tenant
         self.logger = logger
 
+        # get config dir for tenant
+        self.config_dir = os.path.dirname(
+            RuntimeConfig.config_file_path('mapViewer', tenant)
+        )
+
         self.permission = PermissionClient()
 
         try:
@@ -31,49 +37,23 @@ class QWC2Viewer:
             self.logger.error("Could not load AUTH_SERVICES_CONFIG:\n%s" % e)
             self.auth_services_config = {}
 
-    def qwc2_index(self, identity, viewer=None):
+    def qwc2_index(self, identity):
         """Return QWC2 index.html for user.
 
         :param obj identity: User identity
-        :param str viewer: Optional custom viewer name (None for default)
         """
-        qwc2_path = os.environ.get('QWC2_PATH', 'qwc2/')
-
-        if viewer:
-            # check custom viewer permissions
-            viewer_permissions = self.viewer_permissions(identity, viewer)
-            if not viewer_permissions:
-                # redirect to default viewer if not permitted
-                return redirect(url_for('index'))
-
-            viewers_path = os.environ.get(
-                'QWC2_VIEWERS_PATH', os.path.join(qwc2_path, 'viewers')
+        # check if index file is present
+        viewer_index_file = os.path.join(self.config_dir, 'index.html')
+        if not os.path.isfile(viewer_index_file):
+            # show FileNotFoundError error
+            raise Exception(
+                "[Errno 2] No such file or directory: '%s'" %
+                viewer_index_file
             )
 
-            # try to send custom viewer index '<viewer>.html'
-            filename = '%s.html' % viewer
-            viewer_index_file = safe_join(viewers_path, '%s' % filename)
-            try:
-                if os.path.isfile(viewer_index_file):
-                    self.logger.debug(
-                        "Using custom viewer index '%s'" % filename
-                    )
-                    return send_from_directory(viewers_path, filename)
-                else:
-                    # show FileNotFoundError error
-                    raise Exception(
-                        "[Errno 2] No such file or directory: '%s'" %
-                        viewer_index_file
-                    )
-            except Exception as e:
-                self.logger.error(
-                    "Could not load custom viewer index '%s':\n%s" %
-                    (filename, e)
-                )
-                # fallback to default index
-
-        # send default index
-        return send_from_directory(qwc2_path, 'index.html')
+        # send index.html from config dir
+        self.logger.debug("Using index '%s'" % viewer_index_file)
+        return send_from_directory(self.config_dir, 'index.html')
 
     def qwc2_config(self, identity, viewer=None):
         """Return QWC2 config.json for user.

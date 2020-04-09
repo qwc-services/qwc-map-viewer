@@ -66,11 +66,10 @@ def with_no_cache_headers(response):
 
 # routes
 @app.route('/')
-@app.route('/<viewer>/')
-def index(viewer=None):
+def index():
     identity = origin_detector.detect(get_jwt_identity(), request)
     qwc2_viewer = qwc2_viewer_handler(identity)
-    return qwc2_viewer.qwc2_index(identity, viewer)
+    return qwc2_viewer.qwc2_index(identity)
 
 
 @app.route('/config.json')
