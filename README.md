@@ -51,6 +51,9 @@ Example:
   "resources": {
     "qwc2_config": {
         // contents from QWC2 config.json
+    },
+    "qwc2_themes": {
+        // themes configuration
     }
   }
 }
@@ -58,21 +61,10 @@ Example:
 
 `qwc2_config` contains the QWC2 application config, corresponding to the contents of your standalone `config.json` file (see [Documentation](https://github.com/qgis/qwc2-demo-app/blob/master/doc/QWC2_Documentation.md#application-configuration-the-configjson-and-jsappconfigjs-files)).
 
+`qwc2_themes` contains the full themes configuration, mostly corresponding to the `themes.json` collected from `themesConfig.json`.
+
 Add new themes to your `themesConfig.json` (see [Documentation](https://github.com/qgis/qwc2-demo-app/blob/master/doc/QWC2_Documentation.md#theme-configuration-qgis-projects-and-the-themesconfigjson-file)) and put any theme thumbnails into `$QWC2_PATH/assets/img/mapthumbs/`.
 The `themesConfig.json` file is used by the Config service to collect the full themes configuration using GetProjectSettings.
-
-
-### Custom viewer configurations
-
-Additional viewer configurations can be added by placing a `<viewer>.json`, `<viewer>_qwc.json` and/or `<viewer>.html` for each custom viewer into the `$QWC2_VIEWERS_PATH` directory. The custom viewers can be opened by appending the viewer name to the base URL: `http://localhost:5030/<viewer>/`.
-
-A custom `<viewer>.json` contains the viewer specific themes.
-A custom `<viewer>_qwc.json` could e.g. contain a different set of menu items and tools.
-A custom `<viewer>.html` could e.g. show a different title and use a custom CSS.
-
-If a `<viewer>.json`, `<viewer>_qwc.json` or `<viewer>.html` is missing, the default `themesConfig.json`, `config.json` or `index.html` is used instead.
-
-**NOTE**: `<viewer>_qwc.json` for the viewer config has been renamed from `<viewer>.json` in previous Map Viewer versions (up to 27f0149c8433c70d1de519ffe9f9a8ebff25e32f).
 
 
 ### Sign in based on request origin
@@ -136,7 +128,6 @@ Set the `QWC2_PATH` environment variable to your QWC2 files path.
 Optionally:
 
  * Set the `QWC2_CONFIG` environment variable to your QWC2 `config.json` path if it is not located in `$QWC2_PATH`.
- * Set the `QWC2_VIEWERS_PATH` environment variable to your QWC2 custom viewers path (default: `$QWC2_PATH/viewers/`).
  * Set the `PERMALINK_SERVICE_URL` environment variable to the QWC permalink service URL.
  * Set the `ELEVATION_SERVICE_URL` environment variable to the QWC elevation service URL.
  * Set the `MAPINFO_SERVICE_URL` environment variable to the QWC map info service URL.

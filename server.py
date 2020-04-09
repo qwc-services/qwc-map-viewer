@@ -81,12 +81,11 @@ def qwc2_config():
 
 
 @app.route('/themes.json')
-@app.route('/<viewer>/themes.json')
 @jwt_optional
-def qwc2_themes(viewer=None):
+def qwc2_themes():
     identity = origin_detector.detect(get_jwt_identity(), request)
     qwc2_viewer = qwc2_viewer_handler(identity)
-    return with_no_cache_headers(qwc2_viewer.qwc2_themes(identity, viewer))
+    return with_no_cache_headers(qwc2_viewer.qwc2_themes(identity))
 
 
 @app.route('/assets/<path:path>')

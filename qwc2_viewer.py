@@ -194,13 +194,17 @@ class QWC2Viewer:
         for item in items_to_remove:
             items.remove(item)
 
-    def qwc2_themes(self, identity, viewer=None):
+    def qwc2_themes(self, identity):
         """Return QWC2 themes.json for user.
 
         :param obj identity: User identity
-        :param str viewer: Optional custom viewer name (None for default)
         """
         self.logger.debug('Getting themes.json for identity: %s', identity)
+
+        # deep copy qwc2_themes
+        themes = json.loads(json.dumps(self.resources['qwc2_themes']))
+
+        # TODO: filter by permissions
 
         ogc_server_url = os.environ.get(
             'OGC_SERVICE_URL', 'http://localhost:5013/').rstrip('/') + '/'
@@ -211,17 +215,7 @@ class QWC2Viewer:
         print_service_url = os.environ.get(
             'PRINT_SERVICE_URL', ogc_server_url).rstrip('/') + '/'
 
-        if viewer:
-            # check custom viewer permissions
-            viewer_permissions = self.viewer_permissions(identity, viewer)
-            if not viewer_permissions:
-                # redirect to default themes if not permitted
-                return redirect(url_for('qwc2_themes'))
-
-        themes = self.permission.qwc_permissions(identity, viewer)
-        if not themes:
-            return jsonify({"error": "Failed to generate themes.json"})
-        for item in themes.get('themes', {}).get('items', []):
+        for item in themes.get('items', []):
             # update service URLs
             wms_name = item['wms_name']
             item.update({
@@ -233,11 +227,11 @@ class QWC2Viewer:
             # NOTICE: We're updating the permission cache object!
             # del item['wms_name']
 
-        subdirs = themes.get('themes', {}).get('subdirs', [])
+        subdirs = themes.get('subdirs', [])
         self.__update_subdir_urls(subdirs, ogc_server_url, info_service_url,
                                   legend_service_url, print_service_url)
 
-        return jsonify({"themes": themes.get('themes', {})})
+        return jsonify({"themes": themes})
 
     def __update_subdir_urls(self, subdirs, ogc_server_url, info_service_url,
                              legend_service_url, print_service_url):
@@ -256,16 +250,6 @@ class QWC2Viewer:
                                           info_service_url, legend_service_url,
                                           print_service_url)
 
-    def viewer_permissions(self, identity, viewer=None):
-        """Return permitted viewer resources.
-
-        :param obj identity: User name or Identity dict
-        :param str viewer: Optional custom viewer name (None for default)
-        """
-        return self.permission.resource_permissions(
-            'viewer', identity, name=viewer
-        )
-
     def load_resources(self, config):
         """Load service resources from config.
 
@@ -274,6 +258,10 @@ class QWC2Viewer:
         # load QWC2 application config
         qwc2_config = config.resources().get('qwc2_config', {})
 
+        # load themes config
+        qwc2_themes = config.resources().get('qwc2_themes', {})
+
         return {
-            'qwc2_config': qwc2_config
+            'qwc2_config': qwc2_config,
+            'qwc2_themes': qwc2_themes
         }
