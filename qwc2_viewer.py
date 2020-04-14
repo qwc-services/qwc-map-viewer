@@ -26,6 +26,42 @@ class QWC2Viewer:
         # path to QWC2 files
         self.qwc2_path = config.get('qwc2_path', 'qwc2/')
 
+        # QWC service URLs for config.json
+        self.auth_service_url = self.__sanitize_url(
+            config.get('auth_service_url'))
+        self.ccc_config_service_url = self.__sanitize_url(
+            config.get('ccc_config_service_url'))
+        self.data_service_url = self.__sanitize_url(
+            config.get('data_service_url'))
+        self.dataproduct_service_url = self.__sanitize_url(
+            config.get('dataproduct_service_url'))
+        self.document_service_url = self.__sanitize_url(
+            config.get('document_service_url',
+                       config.get('feature_report_service_url')))
+        self.elevation_service_url = self.__sanitize_url(
+            config.get('elevation_service_url'))
+        self.landreg_service_url = self.__sanitize_url(
+            config.get('landreg_service_url'))
+        self.mapinfo_service_url = self.__sanitize_url(
+            config.get('mapinfo_service_url'))
+        self.permalink_service_url = self.__sanitize_url(
+            config.get('permalink_service_url'))
+        self.plotinfo_service_url = self.__sanitize_url(
+            config.get('plotinfo_service_url'))
+        self.proxy_service_url = self.__sanitize_url(
+            config.get('proxy_service_url'))
+        self.search_service_url = self.__sanitize_url(
+            config.get('search_service_url'))
+        # QWC service URLs for themes.json
+        self.ogc_service_url = self.__sanitize_url(
+            config.get('ogc_service_url', 'http://localhost:5013/'))
+        self.info_service_url = self.__sanitize_url(
+            config.get('info_service_url', self.ogc_service_url))
+        self.legend_service_url = self.__sanitize_url(
+            config.get('legend_service_url', self.ogc_service_url))
+        self.print_service_url = self.__sanitize_url(
+            config.get('print_service_url', self.ogc_service_url))
+
         # get config dir for tenant
         self.config_dir = os.path.dirname(
             RuntimeConfig.config_file_path('mapViewer', tenant)
@@ -71,32 +107,41 @@ class QWC2Viewer:
 
         # TODO: filter by permissions
 
-        config['proxyServiceUrl'] = self.__sanitize_url(os.environ.get(
-            'PROXY_SERVICE_URL', config.get('proxyServiceUrl', '')))
-        config['permalinkServiceUrl'] = self.__sanitize_url(os.environ.get(
-            'PERMALINK_SERVICE_URL', config.get('permalinkServiceUrl', '')))
-        config['elevationServiceUrl'] = self.__sanitize_url(os.environ.get(
-            'ELEVATION_SERVICE_URL', config.get('elevationServiceUrl', '')))
-        config['mapInfoService'] = self.__sanitize_url(os.environ.get(
-            'MAPINFO_SERVICE_URL', config.get('mapInfoService', '')))
-        config['featureReportService'] = self.__sanitize_url(os.environ.get(
-            'DOCUMENT_SERVICE_URL', config.get('featureReportService', '')))
-        config['editServiceUrl'] = self.__sanitize_url(os.environ.get(
-            'DATA_SERVICE_URL', config.get('editServiceUrl', '')))
-        config['searchServiceUrl'] = self.__sanitize_url(os.environ.get(
-            'SEARCH_SERVICE_URL', config.get('searchServiceUrl', '')))
-        config['wmsDpi'] = os.environ.get(
-            'WMS_DPI', config.get('wmsDpi', '96'))
-
         # get auth service URL for base group from identity
         auth_service_url = self.auth_services_config.get(
             identity.get('group'),
-            # fallback to AUTH_SERVICE_URL then viewer config
-            os.environ.get(
-                'AUTH_SERVICE_URL', config.get('authServiceUrl', '')
-            )
+            # fallback to auth_service_url from config
+            self.auth_service_url
         )
-        config['authServiceUrl'] = self.__sanitize_url(auth_service_url)
+
+        # set QWC service URLs
+        if auth_service_url:
+            config['authServiceUrl'] = self.__sanitize_url(auth_service_url)
+        if self.ccc_config_service_url:
+            config['cccConfigService'] = self.ccc_config_service_url
+        if self.data_service_url:
+            config['editServiceUrl'] = self.data_service_url
+        if self.dataproduct_service_url:
+            config['dataproductServiceUrl'] = self.dataproduct_service_url
+        if self.document_service_url:
+            config['featureReportService'] = self.document_service_url
+        if self.elevation_service_url:
+            config['elevationServiceUrl'] = self.elevation_service_url
+        if self.landreg_service_url:
+            config['landRegisterService'] = self.landreg_service_url
+        if self.mapinfo_service_url:
+            config['mapInfoService'] = self.mapinfo_service_url
+        if self.permalink_service_url:
+            config['permalinkServiceUrl'] = self.permalink_service_url
+        if self.plotinfo_service_url:
+            config['plotInfoService'] = self.plotinfo_service_url
+        if self.proxy_service_url:
+            config['proxyServiceUrl'] = self.proxy_service_url
+        if self.search_service_url:
+            config['searchServiceUrl'] = self.search_service_url
+
+        config['wmsDpi'] = os.environ.get(
+            'WMS_DPI', config.get('wmsDpi', '96'))
 
         # Look for any Login item, and change it to logout if user is signed in
         signed_in = identity.get('username') is not None
@@ -204,30 +249,21 @@ class QWC2Viewer:
 
         # TODO: filter by permissions
 
-        ogc_server_url = os.environ.get(
-            'OGC_SERVICE_URL', 'http://localhost:5013/').rstrip('/') + '/'
-        info_service_url = os.environ.get(
-            'INFO_SERVICE_URL', ogc_server_url).rstrip('/') + '/'
-        legend_service_url = os.environ.get(
-            'LEGEND_SERVICE_URL', ogc_server_url).rstrip('/') + '/'
-        print_service_url = os.environ.get(
-            'PRINT_SERVICE_URL', ogc_server_url).rstrip('/') + '/'
-
         for item in themes.get('items', []):
             # update service URLs
             wms_name = item['wms_name']
             item.update({
-                'url': "%s%s" % (ogc_server_url, wms_name),
-                'featureInfoUrl': "%s%s" % (info_service_url, wms_name),
-                'legendUrl': "%s%s" % (legend_service_url, wms_name),
-                'printUrl': "%s%s" % (print_service_url, wms_name)
+                'url': "%s%s" % (self.ogc_service_url, wms_name),
+                'featureInfoUrl': "%s%s" % (self.info_service_url, wms_name),
+                'legendUrl': "%s%s" % (self.legend_service_url, wms_name),
+                'printUrl': "%s%s" % (self.print_service_url, wms_name)
             })
-            # NOTICE: We're updating the permission cache object!
-            # del item['wms_name']
 
         subdirs = themes.get('subdirs', [])
-        self.__update_subdir_urls(subdirs, ogc_server_url, info_service_url,
-                                  legend_service_url, print_service_url)
+        self.__update_subdir_urls(
+            subdirs, self.ogc_service_url, self.info_service_url,
+            self.legend_service_url, self.print_service_url
+        )
 
         return jsonify({"themes": themes})
 

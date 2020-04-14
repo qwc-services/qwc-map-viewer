@@ -7,7 +7,7 @@ Provide a [QWC2 Web Client](https://github.com/qgis/qwc2-demo-app) application u
 
 **Note:**: Custom viewers have been replaced by tenants in v2.
 
-**Note:** Requires a QWC OGC service or QGIS server running on `$OGC_SERVICE_URL`. Additional QWC Services are optional.
+**Note:** Requires a QWC OGC service or QGIS server running on `OGC_SERVICE_URL`. Additional QWC Services are optional.
 
 
 Setup
@@ -46,22 +46,57 @@ Example:
 {
   "service": "map-viewer",
   "config": {
-    "qwc2_path": "qwc2/"
+    // path to QWC2 files
+    "qwc2_path": "qwc2/",
+    // QWC OGC service (required)
+    "ogc_service_url": "http://localhost:5013/",
+    // some optional QWC services
+    "auth_service_url": "http://localhost:5017/",
+    "data_service_url": "http://localhost:5012/"
   },
   "resources": {
     "qwc2_config": {
-        // contents from QWC2 config.json
+      // contents from QWC2 config.json
     },
     "qwc2_themes": {
-        // themes configuration
+      // themes configuration
+      "items": [
+        {
+          "name": "qwc_demo",
+          "title": "Demo",
+          "url": "/ows/qwc_demo",
+          // ...
+          "sublayers": [
+            // ...
+          ]
+        }
+      ],
+      "backgroundLayers": [
+        // ...
+      ],
+      // ...
     }
   }
 }
 ```
 
+All `config` options may be overridden by setting corresponding upper-case environment variables, e.g. `OGC_SERVICE_URL` for `ogc_service_url`.
+
+Main optional QWC services:
+ * `auth_service_url`: QWC Auth Service URL
+ * `data_service_url`: QWC Data Service URL
+ * `document_service_url`: QWC Document Service URL
+ * `elevation_service_url`: QWC Elevation Service URL
+ * `info_service_url`: QWC FeatureInfo Service URL
+ * `legend_service_url`: QWC Legend Service URL
+ * `permalink_service_url`: QWC Permalink Service URL
+ * `print_service_url`: QWC Print Service URL
+ * `proxy_service_url`: Proxy Service URL
+ * `search_service_url`: QWC Search Service URL
+
 `qwc2_config` contains the QWC2 application config, corresponding to the contents of your standalone `config.json` file (see [Documentation](https://github.com/qgis/qwc2-demo-app/blob/master/doc/QWC2_Documentation.md#application-configuration-the-configjson-and-jsappconfigjs-files)).
 
-`qwc2_themes` contains the full themes configuration, mostly corresponding to the `themes.json` collected from `themesConfig.json`.
+`qwc2_themes` contains the full themes configuration, mostly corresponding to `themes` in the `themes.json` collected from `themesConfig.json`.
 
 Add new themes to your `themesConfig.json` (see [Documentation](https://github.com/qgis/qwc2-demo-app/blob/master/doc/QWC2_Documentation.md#theme-configuration-qgis-projects-and-the-themesconfigjson-file)) and put any theme thumbnails into `$QWC2_PATH/assets/img/mapthumbs/`.
 The `themesConfig.json` file is used to collect the full themes configuration using GetProjectSettings.
@@ -111,22 +146,8 @@ Usage
 
 Set the `CONFIG_PATH` environment variable to the path containing the service config and permission files when starting this service (default: `config`).
 
-Set the `OGC_SERVICE_URL` environment variable to the QWC OGC service URL (or QGIS server URL)
-when starting this service. (default: `http://localhost:5013/` on
-qwc-ogc-service container)
-
 Optionally:
 
- * Set the `DATA_SERVICE_URL` environment variable to the QWC Data service URL.
- * Set the `PERMALINK_SERVICE_URL` environment variable to the QWC permalink service URL.
- * Set the `ELEVATION_SERVICE_URL` environment variable to the QWC elevation service URL.
- * Set the `MAPINFO_SERVICE_URL` environment variable to the QWC map info service URL.
- * Set the `DOCUMENT_SERVICE_URL` environment variable to the QWC document service URL.
- * Set the `SEARCH_SERVICE_URL` environment variable to the QWC search service URL.
- * Set the `AUTH_SERVICE_URL` environment variable to the default QWC auth service URL.
- * Set the `INFO_SERVICE_URL` environment variable to the QWC feature info proxy service URL.
- * Set the `LEGEND_SERVICE_URL` environment variable to the QWC legend graphics proxy service URL.
- * Set the `PRINT_SERVICE_URL` environment variable to the QWC print proxy service URL.
  * Set the `ORIGIN_CONFIG` environment variable to your origin detection rules.
  * Set the `AUTH_SERVICES_CONFIG` environment variable to your auth service lookups.
 
@@ -226,8 +247,8 @@ Install requirements:
 
 Start local service:
 
-    CONFIG_PATH=/PATH/TO/CONFIGS/ OGC_SERVICE_URL=http://localhost:5013/ DATA_SERVICE_URL=http://localhost:5012/ python server.py
+    CONFIG_PATH=/PATH/TO/CONFIGS/ python server.py
 
 Start local service with local auth service config:
-
-    CONFIG_PATH=/PATH/TO/CONFIGS/ OGC_SERVICE_URL=http://localhost:5013/ DATA_SERVICE_URL=http://localhost:5012/ AUTH_SERVICES_CONFIG='{"_intern_": "http://127.0.0.1:5017/"}' AUTH_SERVICE_URL=http://localhost:5017/ python server.py
+ 
+     CONFIG_PATH=/PATH/TO/CONFIGS/ AUTH_SERVICES_CONFIG='{"_intern_": "http://127.0.0.1:5017/"}' python server.py
