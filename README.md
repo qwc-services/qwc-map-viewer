@@ -7,7 +7,7 @@ Provide a [QWC2 Web Client](https://github.com/qgis/qwc2-demo-app) application u
 
 **Note:**: Custom viewers have been replaced by tenants in v2.
 
-**Note:** Requires a QWC OGC service or QGIS server running on `OGC_SERVICE_URL`. Additional QWC Services are optional.
+**Note:** Requires a QWC OGC service or QGIS server running on `ogc_service_url`. Additional QWC Services are optional.
 
 
 Setup
@@ -85,7 +85,6 @@ All `config` options may be overridden by setting corresponding upper-case envir
 Main optional QWC services:
  * `auth_service_url`: QWC Auth Service URL
  * `data_service_url`: QWC Data Service URL
- * `document_service_url`: QWC Document Service URL
  * `elevation_service_url`: QWC Elevation Service URL
  * `info_service_url`: QWC FeatureInfo Service URL
  * `legend_service_url`: QWC Legend Service URL
@@ -102,55 +101,10 @@ Add new themes to your `themesConfig.json` (see [Documentation](https://github.c
 The `themesConfig.json` file is used to collect the full themes configuration using GetProjectSettings.
 
 
-### Sign in based on request origin
-
-The `AUTH_SERVICE_URL` is used by default for sign in and sign out.
-
-To differentiate e.g between intranet and internet, identity groups based on request origin and different auth service URLs can be configured:
-
-* `ORIGIN_CONFIG`: JSON with rules configuration
-
-    Match by request host:
-    ```json
-    {
-        "host": {
-            "<group name>": "<RegEx pattern for host from request>",
-            "_intern_": "^127.0.0.1(:\\\\d+)?$"
-        }
-    }
-    ```
-
-    Match by request IP:
-    ```json
-    {
-        "ip": {
-            "<group name>": "<RegEx pattern for IP from request>",
-            "_intern_": "^127.0.0.\\d{1,3}$"
-        }
-    }
-    ```
-
-    The origin detection can be based on the request host or IP by setting `host` or/and `ip` in `ORIGIN_CONFIG`. The first match is used as the identity group (`_public_` if nothing matched).
-
-* `AUTH_SERVICES_CONFIG`: JSON with lookup of auth service URLs for groups (with fallback to `AUTH_SERVICE_URL`)
-    ```json
-    {
-        "<group name>": "<auth service route or URL>",
-        "_intern_": "http://127.0.0.1:5017/"
-    }
-    ```
-
-
 Usage
 -----
 
 Set the `CONFIG_PATH` environment variable to the path containing the service config and permission files when starting this service (default: `config`).
-
-Optionally:
-
- * Set the `ORIGIN_CONFIG` environment variable to your origin detection rules.
- * Set the `AUTH_SERVICES_CONFIG` environment variable to your auth service lookups.
-
 
 Base URL:
 
@@ -248,7 +202,3 @@ Install requirements:
 Start local service:
 
     CONFIG_PATH=/PATH/TO/CONFIGS/ python server.py
-
-Start local service with local auth service config:
- 
-     CONFIG_PATH=/PATH/TO/CONFIGS/ AUTH_SERVICES_CONFIG='{"_intern_": "http://127.0.0.1:5017/"}' python server.py

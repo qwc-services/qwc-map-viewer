@@ -69,14 +69,6 @@ class QWC2Viewer:
 
         self.resources = self.load_resources(config)
 
-        try:
-            self.auth_services_config = json.loads(
-                os.environ.get('AUTH_SERVICES_CONFIG', '{}')
-            )
-        except Exception as e:
-            self.logger.error("Could not load AUTH_SERVICES_CONFIG:\n%s" % e)
-            self.auth_services_config = {}
-
     def qwc2_index(self, identity):
         """Return QWC2 index.html for user.
 
@@ -107,16 +99,9 @@ class QWC2Viewer:
 
         # TODO: filter by permissions
 
-        # get auth service URL for base group from identity
-        auth_service_url = self.auth_services_config.get(
-            identity.get('group'),
-            # fallback to auth_service_url from config
-            self.auth_service_url
-        )
-
         # set QWC service URLs
-        if auth_service_url:
-            config['authServiceUrl'] = self.__sanitize_url(auth_service_url)
+        if self.auth_service_url:
+            config['authServiceUrl'] = self.auth_service_url
         if self.ccc_config_service_url:
             config['cccConfigService'] = self.ccc_config_service_url
         if self.data_service_url:
@@ -143,8 +128,17 @@ class QWC2Viewer:
         config['wmsDpi'] = os.environ.get(
             'WMS_DPI', config.get('wmsDpi', '96'))
 
+        username = None
+        if identity:
+            if isinstance(identity, dict):
+                username = identity.get('username')
+                # NOTE: ignore group from identity
+            else:
+                # identity is username
+                username = identity
+
         # Look for any Login item, and change it to logout if user is signed in
-        signed_in = identity.get('username') is not None
+        signed_in = username is not None
         self.__replace_login__helper_plugins(
             config['plugins']['mobile'], signed_in)
         self.__replace_login__helper_plugins(
@@ -158,7 +152,7 @@ class QWC2Viewer:
         self.__filter_restricted_viewer_tasks(
             config['plugins']['desktop'], viewer_task_permissions
         )
-        config['username'] = identity.get('username')
+        config['username'] = username
 
         return jsonify(config)
 

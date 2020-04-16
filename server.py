@@ -7,7 +7,6 @@ from flask_jwt_extended import jwt_optional, get_jwt_identity
 
 from qwc_services_core.jwt import jwt_manager
 from qwc_services_core.tenant_handler import TenantHandler
-from origin_detector import OriginDetector
 from qwc2_viewer import QWC2Viewer
 
 
@@ -36,19 +35,6 @@ def qwc2_viewer_handler(identity):
     return handler
 
 
-try:
-    origin_config = json.loads(
-        os.environ.get(
-            'ORIGIN_CONFIG', '{"host": {"_intern_": "^127.0.0.1(:\\\\d+)?$"}}'
-        )
-    )
-except Exception as e:
-    app.logger.error("Could not load ORIGIN_CONFIG:\n%s" % e)
-    origin_config = {}
-
-origin_detector = OriginDetector(app.logger, origin_config)
-
-
 def with_no_cache_headers(response):
     """Add cache-disabling headers to response.
 
@@ -63,7 +49,7 @@ def with_no_cache_headers(response):
 # routes
 @app.route('/')
 def index():
-    identity = origin_detector.detect(get_jwt_identity(), request)
+    identity = get_jwt_identity()
     qwc2_viewer = qwc2_viewer_handler(identity)
     return qwc2_viewer.qwc2_index(identity)
 
@@ -71,7 +57,7 @@ def index():
 @app.route('/config.json')
 @jwt_optional
 def qwc2_config():
-    identity = origin_detector.detect(get_jwt_identity(), request)
+    identity = get_jwt_identity()
     qwc2_viewer = qwc2_viewer_handler(identity)
     return with_no_cache_headers(qwc2_viewer.qwc2_config(identity))
 
@@ -79,7 +65,7 @@ def qwc2_config():
 @app.route('/themes.json')
 @jwt_optional
 def qwc2_themes():
-    identity = origin_detector.detect(get_jwt_identity(), request)
+    identity = get_jwt_identity()
     qwc2_viewer = qwc2_viewer_handler(identity)
     return with_no_cache_headers(qwc2_viewer.qwc2_themes(identity))
 
