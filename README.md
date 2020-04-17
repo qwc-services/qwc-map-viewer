@@ -56,6 +56,9 @@ Example:
   },
   "resources": {
     "qwc2_config": {
+      // restricted menu items
+      "restricted_viewer_tasks": ["RasterExport"],
+
       // contents from QWC2 config.json
     },
     "qwc2_themes": {
@@ -93,12 +96,52 @@ Main optional QWC services:
  * `proxy_service_url`: Proxy Service URL
  * `search_service_url`: QWC Search Service URL
 
-`qwc2_config` contains the QWC2 application config, corresponding to the contents of your standalone `config.json` file (see [Documentation](https://github.com/qgis/qwc2-demo-app/blob/master/doc/QWC2_Documentation.md#application-configuration-the-configjson-and-jsappconfigjs-files)).
+`qwc2_config` contains the QWC2 application config, mostly corresponding to the contents of your standalone `config.json` file (see [Documentation](https://github.com/qgis/qwc2-demo-app/blob/master/doc/QWC2_Documentation.md#application-configuration-the-configjson-and-jsappconfigjs-files)).
 
 `qwc2_themes` contains the full themes configuration, mostly corresponding to `themes` in the `themes.json` collected from `themesConfig.json`.
 
 Add new themes to your `themesConfig.json` (see [Documentation](https://github.com/qgis/qwc2-demo-app/blob/master/doc/QWC2_Documentation.md#theme-configuration-qgis-projects-and-the-themesconfigjson-file)) and put any theme thumbnails into `$QWC2_PATH/assets/img/mapthumbs/`.
 The `themesConfig.json` file is used to collect the full themes configuration using GetProjectSettings.
+
+
+### Permissions
+
+* File location: `$CONFIG_PATH/<tenant>/permissions.json`
+
+Example:
+```json
+{
+  "users": [
+    {
+      "name": "demo",
+      "groups": ["demo"],
+      "roles": []
+    }
+  ],
+  "groups": [
+    {
+      "name": "demo",
+      "roles": ["demo"]
+    }
+  ],
+  "roles": [
+    {
+      "role": "public",
+      "permissions": {
+        "viewer_tasks": []
+      }
+    },
+    {
+      "role": "demo",
+      "permissions": {
+        "viewer_tasks": ["RasterExport"]
+      }
+    }
+  ]
+}
+```
+
+In this example, the _Raster Export_ map tool will only be visible for users with the role `demo`.
 
 
 Usage

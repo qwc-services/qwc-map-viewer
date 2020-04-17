@@ -2,6 +2,7 @@ import os
 
 from flask import json, jsonify, send_from_directory
 
+from qwc_services_core.permissions_reader import PermissionsReader
 from qwc_services_core.runtime_config import RuntimeConfig
 
 
@@ -68,6 +69,7 @@ class QWC2Viewer:
         )
 
         self.resources = self.load_resources(config)
+        self.permissions_handler = PermissionsReader(tenant, logger)
 
     def qwc2_index(self, identity):
         """Return QWC2 index.html for user.
@@ -144,8 +146,8 @@ class QWC2Viewer:
         self.__replace_login__helper_plugins(
             config['plugins']['desktop'], signed_in)
 
-        # TODO: filter any restricted viewer task items
-        viewer_task_permissions = {}
+        # filter any restricted viewer task items
+        viewer_task_permissions = self.viewer_task_permissions(identity)
         self.__filter_restricted_viewer_tasks(
             config['plugins']['mobile'], viewer_task_permissions
         )
@@ -322,3 +324,26 @@ class QWC2Viewer:
             'qwc2_config': qwc2_config,
             'qwc2_themes': qwc2_themes
         }
+
+    def viewer_task_permissions(self, identity):
+        """Return permissions for viewer tasks.
+
+        :param str identity: User identity
+        """
+        # get restricted viewer tasks
+        restricted_viewer_tasks = self.resources['qwc2_config']. \
+            get('restricted_viewer_tasks', [])
+
+        # get permitted viewer tasks
+        permitted_viewer_tasks = self.permissions_handler.resource_permissions(
+            'viewer_tasks', identity
+        )
+        # unique set
+        permitted_viewer_tasks = set(permitted_viewer_tasks)
+
+        # set permissions
+        viewer_tasks = {}
+        for viewer_task in restricted_viewer_tasks:
+            viewer_tasks[viewer_task] = viewer_task in permitted_viewer_tasks
+
+        return viewer_tasks
