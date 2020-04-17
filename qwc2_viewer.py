@@ -99,8 +99,6 @@ class QWC2Viewer:
         # deep copy qwc2_config
         config = json.loads(json.dumps(self.resources['qwc2_config']))
 
-        # TODO: filter by permissions
-
         # set QWC service URLs
         if self.auth_service_url:
             config['authServiceUrl'] = self.auth_service_url
@@ -240,10 +238,8 @@ class QWC2Viewer:
         """
         self.logger.debug('Getting themes.json for identity: %s', identity)
 
-        # deep copy qwc2_themes
-        themes = json.loads(json.dumps(self.resources['qwc2_themes']))
-
-        # TODO: filter by permissions
+        # filter by permissions
+        themes = self.permitted_themes(identity)
 
         for item in themes.get('items', []):
             # update service URLs
@@ -347,3 +343,107 @@ class QWC2Viewer:
             viewer_tasks[viewer_task] = viewer_task in permitted_viewer_tasks
 
         return viewer_tasks
+
+    def permitted_themes(self, identity):
+        """Return qwc2_themes filtered by permissions.
+
+        :param str identity: User identity
+        """
+        # deep copy qwc2_themes
+        themes = json.loads(json.dumps(self.resources['qwc2_themes']))
+
+        # filter theme items by permissions
+        items = []
+        for item in themes['items']:
+            permitted_item = self.permitted_theme_item(item, identity)
+            if permitted_item:
+                items.append(permitted_item)
+
+        themes['items'] = items
+
+        # filter theme groups by permissions
+        groups = []
+        for group in themes['subdirs']:
+            permitted_group = self.permitted_theme_group(group, identity)
+            if permitted_group:
+                groups.append(permitted_group)
+
+        return themes
+
+    def permitted_theme_group(self, theme_group, identity):
+        """Return theme group filtered by permissions.
+
+        :param obj group: Theme group
+        :param str identity: User identity
+        """
+        # collect theme items
+        items = []
+        for item in theme_group['items']:
+            permitted_item = self.permitted_theme_item(item, identity)
+            if permitted_item:
+                items.append(permitted_item)
+
+        theme_group['items'] = items
+
+        # collect sub groups
+        subgroups = []
+        for subgroup in theme_group['subdirs']:
+            # recursively filter sub group
+            permitted_subgroup = self.permitted_theme_group(subgroup, identity)
+            if permitted_subgroup:
+                subgroups.append(permitted_subgroup)
+
+        theme_group['subdirs'] = subgroups
+
+        if not items and not subgroups:
+            # remove empty theme group
+            return None
+
+        return theme_group
+
+    def permitted_theme_item(self, item, identity):
+        """Return theme item filtered by permissions.
+
+        :param obj item: Theme item
+        :param str identity: User identity
+        """
+        # get permissions for WMS
+        wms_permissions = self.permissions_handler.resource_permissions(
+            'wms_services', identity, item['wms_name']
+        )
+        if not wms_permissions:
+            # WMS not permitted
+            return None
+
+        # combine permissions
+        permitted_layers = set()
+        for permission in wms_permissions:
+            # collect permitted layers
+            permitted_layers.update([
+                layer['name'] for layer in permission['layers']
+            ])
+
+        # TODO: filter by permissions
+
+        self.filter_restricted_layers(item, permitted_layers)
+
+        return item
+
+    def filter_restricted_layers(self, layer, permitted_layers):
+        """Recursively filter layers by permissions.
+
+        :param obj layer: Layer or group layer
+        :param set permitted_layers: List of permitted layers
+        """
+        if layer.get('sublayers'):
+            # group layer
+            # collect permitted sub layers
+            sublayers = []
+            for sublayer in layer['sublayers']:
+                # check permissions
+                if sublayer['name'] in permitted_layers:
+                    # recursively filter sub layer
+                    self.filter_restricted_layers(sublayer, permitted_layers)
+                    sublayers.append(sublayer)
+
+            layer['sublayers'] = sublayers
