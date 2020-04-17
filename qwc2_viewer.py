@@ -247,9 +247,11 @@ class QWC2Viewer:
             item.update({
                 'url': "%s%s" % (self.ogc_service_url, wms_name),
                 'featureInfoUrl': "%s%s" % (self.info_service_url, wms_name),
-                'legendUrl': "%s%s" % (self.legend_service_url, wms_name),
-                'printUrl': "%s%s" % (self.print_service_url, wms_name)
+                'legendUrl': "%s%s" % (self.legend_service_url, wms_name)
             })
+            if item.get('print'):
+                # add print URL only if print templates available
+                item['printUrl'] = "%s%s" % (self.print_service_url, wms_name)
 
         subdirs = themes.get('subdirs', [])
         self.__update_subdir_urls(
@@ -268,9 +270,13 @@ class QWC2Viewer:
                     item.update({
                         'url': "%s%s" % (ogc_server_url, wms_name),
                         'featureInfoUrl': "%s%s" % (info_service_url, wms_name),
-                        'legendUrl': "%s%s" % (legend_service_url, wms_name),
-                        'printUrl': "%s%s" % (print_service_url, wms_name)
+                        'legendUrl': "%s%s" % (legend_service_url, wms_name)
                     })
+                    if item.get('print'):
+                        # add print URL only if print templates available
+                        item['printUrl'] = "%s%s" % (
+                            print_service_url, wms_name
+                        )
             if 'subdirs' in subdir:
                 self.__update_subdir_urls(subdir['subdirs'], ogc_server_url,
                                           info_service_url, legend_service_url,
@@ -417,15 +423,19 @@ class QWC2Viewer:
 
         # combine permissions
         permitted_layers = set()
+        permitted_print_templates = set()
         for permission in wms_permissions:
             # collect permitted layers
             permitted_layers.update([
                 layer['name'] for layer in permission['layers']
             ])
+            # collect permitted prtint templates
+            permitted_print_templates.update(permission.get('print_templates', []))
 
         # TODO: filter by permissions
 
         self.filter_restricted_layers(item, permitted_layers)
+        self.filter_print_templates(item, permitted_print_templates)
 
         return item
 
@@ -447,3 +457,30 @@ class QWC2Viewer:
                     sublayers.append(sublayer)
 
             layer['sublayers'] = sublayers
+
+    def filter_print_templates(self, item, permitted_print_templates):
+        """Filter print templates by permissions.
+
+        :param obj item: Theme item
+        :param set permitted_print_templates: List of permitted print templates
+        """
+        print_templates = [
+            template for template in item["print"]
+            if template['name'] in permitted_print_templates
+        ]
+
+        if print_templates:
+            item['print'] = print_templates
+        else:
+            # no print templates permitted
+            # remove print configs
+            item.pop('print', None)
+            item.pop('printUrl', None)
+            item.pop('printScales', None)
+            item.pop('printResolutions', None)
+            item.pop('printGrid', None)
+            item.pop('printLabelConfig', None)
+            item.pop('printLabelForSearchResult', None)
+
+            for bg in item.get('backgroundLayers', []):
+                bg.pop('printLayer', None)
