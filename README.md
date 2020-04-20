@@ -61,25 +61,29 @@ Example:
 
       "config": {
         // contents from QWC2 config.json
+        "assetsPath": "/assets",
+        // ...
       }
     },
     "qwc2_themes": {
-      // themes configuration from QWC2 themes.json
-      "items": [
-        {
-          "name": "qwc_demo",
-          "title": "Demo",
-          "url": "/ows/qwc_demo",
-          // ...
-          "sublayers": [
+      // contents from QWC2 themes.json
+      "themes": {
+        "items": [
+          {
+            "name": "qwc_demo",
+            "title": "Demo",
+            "url": "/ows/qwc_demo",
             // ...
-          ]
-        }
-      ],
-      "backgroundLayers": [
+            "sublayers": [
+              // ...
+            ]
+          }
+        ],
+        "backgroundLayers": [
+          // ...
+        ],
         // ...
-      ],
-      // ...
+      }
     }
   }
 }
@@ -98,9 +102,9 @@ Main optional QWC services:
  * `proxy_service_url`: Proxy Service URL
  * `search_service_url`: QWC Search Service URL
 
-`qwc2_config` contains the QWC2 application config, with `config` mostly corresponding to the contents of your standalone `config.json` file (see [Documentation](https://github.com/qgis/qwc2-demo-app/blob/master/doc/QWC2_Documentation.md#application-configuration-the-configjson-and-jsappconfigjs-files)).
+`qwc2_config` contains the QWC2 application configuration, with `config` corresponding to the contents of your standalone `config.json` file (see [Documentation](https://github.com/qgis/qwc2-demo-app/blob/master/doc/QWC2_Documentation.md#application-configuration-the-configjson-and-jsappconfigjs-files)).
 
-`qwc2_themes` contains the full themes configuration, mostly corresponding to `themes` in the `themes.json` collected from `themesConfig.json`.
+`qwc2_themes` contains the full themes configuration, corresponding to the contents of your standalone `themes.json` collected from `themesConfig.json`.
 
 Add new themes to your `themesConfig.json` (see [Documentation](https://github.com/qgis/qwc2-demo-app/blob/master/doc/QWC2_Documentation.md#theme-configuration-qgis-projects-and-the-themesconfigjson-file)) and put any theme thumbnails into `$QWC2_PATH/assets/img/mapthumbs/`.
 The `themesConfig.json` file is used to collect the full themes configuration using GetProjectSettings.

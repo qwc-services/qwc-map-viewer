@@ -323,6 +323,8 @@ class QWC2Viewer:
 
         # load themes config
         qwc2_themes = config.resources().get('qwc2_themes', {})
+        # use contents of 'themes'
+        qwc2_themes = qwc2_themes.get('themes', {})
 
         return {
             'qwc2_config': qwc2_config,
