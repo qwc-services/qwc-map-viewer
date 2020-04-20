@@ -374,6 +374,9 @@ class QWC2Viewer:
             if permitted_group:
                 groups.append(permitted_group)
 
+        # filter background layers by permissions
+        self.filter_background_layers(themes, identity)
+
         return themes
 
     def permitted_theme_group(self, theme_group, identity):
@@ -434,11 +437,11 @@ class QWC2Viewer:
                 permission.get('print_templates', [])
             )
 
-        # TODO: filter by permissions
-
+        # filter by permissions
         self.filter_restricted_layers(item, permitted_layers)
         self.filter_print_templates(item, permitted_print_templates)
         self.filter_edit_config(item, identity)
+        self.filter_item_background_layers(item, identity)
 
         return item
 
@@ -543,3 +546,41 @@ class QWC2Viewer:
         ]
 
         return config
+
+    def filter_background_layers(self, themes, identity):
+        """Filter available background layers by permissions.
+
+        :param obj themes: qwc2_themes
+        :param obj identity: User identity
+        """
+        # get permissions for background layers
+        permitted_bg_layers = self.permissions_handler.resource_permissions(
+            'background_layers', identity
+        )
+
+        # filter background layers by permissions
+        themes['backgroundLayers'] = [
+            layer for layer in themes['backgroundLayers']
+            if layer['name'] in permitted_bg_layers
+        ]
+
+    def filter_item_background_layers(self, item, identity):
+        """Filter theme item background layers by permissions.
+
+        :param obj item: Theme item
+        :param obj identity: User identity
+        """
+        if not item.get('backgroundLayers'):
+            # no background layers
+            return
+
+        # get permissions for background layers
+        permitted_bg_layers = self.permissions_handler.resource_permissions(
+            'background_layers', identity
+        )
+
+        # filter background layers by permissions
+        item['backgroundLayers'] = [
+            layer for layer in item['backgroundLayers']
+            if layer['name'] in permitted_bg_layers
+        ]
