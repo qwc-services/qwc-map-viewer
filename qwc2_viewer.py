@@ -330,7 +330,7 @@ class QWC2Viewer:
     def viewer_task_permissions(self, identity):
         """Return permissions for viewer tasks.
 
-        :param str identity: User identity
+        :param obj identity: User identity
         """
         # get restricted viewer tasks
         restricted_viewer_tasks = self.resources['qwc2_config']. \
@@ -353,7 +353,7 @@ class QWC2Viewer:
     def permitted_themes(self, identity):
         """Return qwc2_themes filtered by permissions.
 
-        :param str identity: User identity
+        :param obj identity: User identity
         """
         # deep copy qwc2_themes
         themes = json.loads(json.dumps(self.resources['qwc2_themes']))
@@ -380,7 +380,7 @@ class QWC2Viewer:
         """Return theme group filtered by permissions.
 
         :param obj group: Theme group
-        :param str identity: User identity
+        :param obj identity: User identity
         """
         # collect theme items
         items = []
@@ -411,7 +411,7 @@ class QWC2Viewer:
         """Return theme item filtered by permissions.
 
         :param obj item: Theme item
-        :param str identity: User identity
+        :param obj identity: User identity
         """
         # get permissions for WMS
         wms_permissions = self.permissions_handler.resource_permissions(
@@ -429,13 +429,16 @@ class QWC2Viewer:
             permitted_layers.update([
                 layer['name'] for layer in permission['layers']
             ])
-            # collect permitted prtint templates
-            permitted_print_templates.update(permission.get('print_templates', []))
+            # collect permitted print templates
+            permitted_print_templates.update(
+                permission.get('print_templates', [])
+            )
 
         # TODO: filter by permissions
 
         self.filter_restricted_layers(item, permitted_layers)
         self.filter_print_templates(item, permitted_print_templates)
+        self.filter_edit_config(item, identity)
 
         return item
 
@@ -484,3 +487,59 @@ class QWC2Viewer:
 
             for bg in item.get('backgroundLayers', []):
                 bg.pop('printLayer', None)
+
+    def filter_edit_config(self, item, identity):
+        """Filter edit config by permissions.
+
+        :param obj item: Theme item
+        :param obj identity: User identity
+        """
+        if not item.get('editConfig'):
+            # no edit config or blank
+            return
+
+        # collect permitted edit datasets
+        edit_config = {}
+        for name, config in item.get('editConfig').items():
+            # dataset name
+            dataset = "%s.%s" % (item['wms_name'], name)
+            permitted_dataset = self.permitted_dataset(
+                dataset, config, identity
+            )
+            if permitted_dataset:
+                edit_config[name] = permitted_dataset
+
+        if edit_config:
+            item['editConfig'] = edit_config
+        else:
+            # no permitted datasets
+            item['editConfig'] = None
+
+    def permitted_dataset(self, dataset, config, identity):
+        """Return edit dataset filtered by permissions.
+
+        :param str dataset: Dataset ID
+        :param obj config: Edit dataset config
+        :param obj identity: User identity
+        """
+        # get permissions for edit dataset
+        dataset_permissions = self.permissions_handler.resource_permissions(
+            'data_datasets', identity, dataset
+        )
+        if not dataset_permissions:
+            # edit dataset not permitted
+            return None
+
+        # combine permissions
+        permitted_attributes = set()
+        for permission in dataset_permissions:
+            # collect permitted attributes
+            permitted_attributes.update(permission.get('attributes', []))
+
+        # filter attributes by permissions
+        config['fields'] = [
+            field for field in config['fields']
+            if field['name'] in permitted_attributes
+        ]
+
+        return config
