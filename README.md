@@ -130,7 +130,57 @@ Example:
     {
       "role": "public",
       "permissions": {
-        "viewer_tasks": []
+        "viewer_tasks": [],
+        "wms_services": [
+          {
+            "name": "qwc_demo",
+            "layers": [
+              {
+                "name": "qwc_demo"
+              },
+              {
+                "name": "edit_demo"
+              },
+              {
+                "name": "edit_points"
+              },
+              {
+                "name": "edit_lines"
+              },
+              {
+                "name": "edit_polygons"
+              },
+              {
+                "name": "geographic_lines"
+              },
+              {
+                "name": "country_names"
+              },
+              {
+                "name": "states_provinces"
+              },
+              {
+                "name": "countries"
+              },
+              {
+                "name": "bluemarble_bg"
+              },
+              {
+                "name": "osm_bg"
+              }
+            ],
+            "print_templates": ["A4 Landscape"]
+          }
+        ],
+        "background_layers": ["bluemarble", "mapnik"],
+        "data_datasets": [
+          {
+            "name": "qwc_demo.edit_points",
+            "attributes": [
+              "id", "name", "description", "num", "value", "type", "amount", "validated", "datetime"
+            ]
+          }
+        ]
       }
     },
     {
@@ -142,6 +192,11 @@ Example:
   ]
 }
 ```
+
+* `viewer_tasks`: permitted menu items if any are restricted
+* `wms_services`: permitted WMS services, layers and print templates
+* `background_layers`: permitted background layers
+* `data_datasets`: permitted datasets for editing
 
 In this example, the _Raster Export_ map tool will only be visible for users with the role `demo`.
 
