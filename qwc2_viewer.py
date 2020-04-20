@@ -96,8 +96,10 @@ class QWC2Viewer:
         """
         self.logger.debug('Generating config.json for identity: %s', identity)
 
-        # deep copy qwc2_config
-        config = json.loads(json.dumps(self.resources['qwc2_config']))
+        # deep copy config from qwc2_config
+        config = json.loads(json.dumps(
+            self.resources['qwc2_config']['config']
+        ))
 
         # set QWC service URLs
         if self.auth_service_url:

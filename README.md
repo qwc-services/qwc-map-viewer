@@ -59,10 +59,12 @@ Example:
       // restricted menu items
       "restricted_viewer_tasks": ["RasterExport"],
 
-      // contents from QWC2 config.json
+      "config": {
+        // contents from QWC2 config.json
+      }
     },
     "qwc2_themes": {
-      // themes configuration
+      // themes configuration from QWC2 themes.json
       "items": [
         {
           "name": "qwc_demo",
@@ -96,7 +98,7 @@ Main optional QWC services:
  * `proxy_service_url`: Proxy Service URL
  * `search_service_url`: QWC Search Service URL
 
-`qwc2_config` contains the QWC2 application config, mostly corresponding to the contents of your standalone `config.json` file (see [Documentation](https://github.com/qgis/qwc2-demo-app/blob/master/doc/QWC2_Documentation.md#application-configuration-the-configjson-and-jsappconfigjs-files)).
+`qwc2_config` contains the QWC2 application config, with `config` mostly corresponding to the contents of your standalone `config.json` file (see [Documentation](https://github.com/qgis/qwc2-demo-app/blob/master/doc/QWC2_Documentation.md#application-configuration-the-configjson-and-jsappconfigjs-files)).
 
 `qwc2_themes` contains the full themes configuration, mostly corresponding to `themes` in the `themes.json` collected from `themesConfig.json`.
 
