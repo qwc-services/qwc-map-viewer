@@ -39,11 +39,13 @@ e.g. `$CONFIG_PATH/default/*.json`. The default tenant name is `default`.
 
 ### Map Viewer config
 
+* [JSON schema](schemas/qwc-map-viewer.json)
 * File location: `$CONFIG_PATH/<tenant>/mapViewerConfig.json`
 
 Example:
 ```jsonc
 {
+  "$schema": "https://raw.githubusercontent.com/qwc-services/qwc-map-viewer/v2/schemas/qwc-map-viewer.json",
   "service": "map-viewer",
   "config": {
     // path to QWC2 files

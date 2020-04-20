@@ -1,0 +1,152 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://raw.githubusercontent.com/qwc-services/qwc-map-viewer/v2/schemas/qwc-map-viewer.json",
+  "title": "QWC Map Viewer",
+  "type": "object",
+  "properties": {
+    "$schema": {
+      "title": "JSON Schema",
+      "description": "Reference to JSON schema of this config",
+      "type": "string",
+      "format": "uri",
+      "default": "https://raw.githubusercontent.com/qwc-services/qwc-map-viewer/v2/schemas/qwc-map-viewer.json"
+    },
+    "service": {
+      "title": "Service name",
+      "type": "string",
+      "const": "map-viewer"
+    },
+    "config": {
+      "title": "Config options",
+      "type": "object",
+      "properties": {
+        "qwc2_path": {
+          "description": "Path to QWC2 files",
+          "type": "string"
+        },
+        "auth_service_url": {
+          "description": "QWC Auth Service URL",
+          "type": "string",
+          "format": "uri"
+        },
+        "ccc_config_service_url": {
+          "description": "CCC Service URL",
+          "type": "string",
+          "format": "uri"
+        },
+        "data_service_url": {
+          "description": "QWC Data Service URL",
+          "type": "string",
+          "format": "uri"
+        },
+        "dataproduct_service_url": {
+          "description": "DataProduct Service URL",
+          "type": "string",
+          "format": "uri"
+        },
+        "document_service_url": {
+          "description": "Document Service URL",
+          "type": "string",
+          "format": "uri"
+        },
+        "elevation_service_url": {
+          "description": "QWC Elevation Service URL",
+          "type": "string",
+          "format": "uri"
+        },
+        "info_service_url": {
+          "description": "QWC FeatureInfo Service URL",
+          "type": "string",
+          "format": "uri"
+        },
+        "landreg_service_url": {
+          "description": "Land Register Extract Service URL",
+          "type": "string",
+          "format": "uri"
+        },
+        "legend_service_url": {
+          "description": "QWC Legend Service URL",
+          "type": "string",
+          "format": "uri"
+        },
+        "mapinfo_service_url": {
+          "description": "MapInfo Service URL",
+          "type": "string",
+          "format": "uri"
+        },
+        "ogc_service_url": {
+          "description": "QWC OGC Service URL",
+          "type": "string",
+          "format": "uri"
+        },
+        "permalink_service_url": {
+          "description": "QWC Permalink Service URL",
+          "type": "string",
+          "format": "uri"
+        },
+        "plotinfo_service_url": {
+          "description": "PlotInfo Service URL",
+          "type": "string",
+          "format": "uri"
+        },
+        "print_service_url": {
+          "description": "QWC Print Service URL",
+          "type": "string",
+          "format": "uri"
+        },
+        "proxy_service_url": {
+          "description": "Proxy Service URL",
+          "type": "string",
+          "format": "uri"
+        },
+        "search_service_url": {
+          "description": "QWC Search Service URL",
+          "type": "string",
+          "format": "uri"
+        }
+      },
+      "required": [
+        "qwc2_path",
+        "ogc_service_url"
+      ]
+    },
+    "resources": {
+      "title": "Resources",
+      "type": "object",
+      "properties": {
+        "qwc2_config": {
+          "type": "object",
+          "properties": {
+            "restricted_viewer_tasks": {
+              "description": "Restricted menu items",
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "config": {
+              "description": "QWC2 application configuration (config.json)",
+              "$ref": "https://raw.githubusercontent.com/qgis/qwc2/master/schemas/config.json"
+            }
+          },
+          "required": [
+            "config"
+          ]
+        },
+        "qwc2_themes": {
+          "description": "QWC2 themes configuration (themes.json)",
+          "$ref": "https://raw.githubusercontent.com/qgis/qwc2/master/schemas/themes.json"
+        }
+      },
+      "required": [
+        "qwc2_config",
+        "qwc2_themes"
+      ]
+    }
+  },
+  "required": [
+    "service",
+    "config",
+    "resources"
+  ]
+}
