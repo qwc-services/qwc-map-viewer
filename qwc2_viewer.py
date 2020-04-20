@@ -377,12 +377,15 @@ class QWC2Viewer:
         # filter background layers by permissions
         self.filter_background_layers(themes, identity)
 
+        # filter unused external layers
+        self.filter_external_layers(themes)
+
         return themes
 
     def permitted_theme_group(self, theme_group, identity):
         """Return theme group filtered by permissions.
 
-        :param obj group: Theme group
+        :param obj theme_group: Theme group
         :param obj identity: User identity
         """
         # collect theme items
@@ -442,6 +445,7 @@ class QWC2Viewer:
         self.filter_print_templates(item, permitted_print_templates)
         self.filter_edit_config(item, identity)
         self.filter_item_background_layers(item, identity)
+        self.filter_item_external_layers(item, permitted_layers)
 
         return item
 
@@ -584,3 +588,47 @@ class QWC2Viewer:
             layer for layer in item['backgroundLayers']
             if layer['name'] in permitted_bg_layers
         ]
+
+    def filter_external_layers(self, themes):
+        """Filter unused external layers.
+
+        :param obj themes: qwc2_themes
+        """
+        if 'externalLayers' in themes:
+            # collect used external layer names
+            external_layers = self.collectExternalLayers(themes)
+
+            # filter unused external layers
+            themes["externalLayers"] = [
+                layer for layer in themes["externalLayers"]
+                if layer['name'] in external_layers
+            ]
+
+    def collectExternalLayers(self, theme_group):
+        """Recursively collect used external layer names.
+
+        :param obj theme_group: Theme group
+        """
+        external_layers = set()
+        for item in theme_group['items']:
+            for layer in item.get('externalLayers', []):
+                external_layers.add(layer.get('name'))
+
+        if 'subdirs' in theme_group:
+            for subgroup in theme_group['subdirs']:
+                external_layers.update(self.collectExternalLayers(subgroup))
+
+        return external_layers
+
+    def filter_item_external_layers(self, item, permitted_layers):
+        """Filter theme item external layers by permissions.
+
+        :param obj item: Theme item
+        :param set permitted_layers: List of permitted layers
+        """
+        if 'externalLayers' in item:
+            # filter external layers by permissions
+            item['externalLayers'] = [
+                layer for layer in item['externalLayers']
+                if layer.get('internalLayer') in permitted_layers
+            ]
