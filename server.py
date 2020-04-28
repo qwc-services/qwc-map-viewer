@@ -2,7 +2,7 @@ import logging
 import os
 import requests
 
-from flask import json, Flask, request
+from flask import json, Flask, request, jsonify
 from flask_jwt_extended import jwt_optional, get_jwt_identity
 
 from qwc_services_core.jwt import jwt_manager
@@ -92,6 +92,18 @@ def qwc2_translations(path):
 def favicon():
     qwc2_viewer = qwc2_viewer_handler(get_jwt_identity())
     return qwc2_viewer.qwc2_favicon()
+
+
+""" readyness probe endpoint """
+@app.route("/ready", methods=['GET'])
+def ready():
+    return jsonify({"status": "OK"})
+
+
+""" liveness probe endpoint """
+@app.route("/healthz", methods=['GET'])
+def healthz():
+    return jsonify({"status": "OK"})
 
 
 # local webserver
