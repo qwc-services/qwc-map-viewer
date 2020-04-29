@@ -37,3 +37,15 @@ jobs:
           tags: "${{ steps.get_tag.outputs.tag }}"
           dockerfile: Dockerfile-qwc2-app
           buildargs: "QWC2_URL"
+
+      - name: Build and publish sogis-map-viewer container
+        uses: elgohr/Publish-Docker-Github-Action@2.12
+        env:
+          QWC2_URL: https://github.com/qwc-services/sogis-qwc2-app/releases/download/ci-latest-master/sogis-qwc2-app.zip
+        with:
+          name: sourcepole/sogis-map-viewer
+          username: ${{ secrets.DOCKER_HUB_USER }}
+          password: ${{ secrets.DOCKER_HUB_PASSWORD }}
+          tags: "${{ steps.get_tag.outputs.tag }}"
+          dockerfile: Dockerfile-qwc2-app
+          buildargs: "QWC2_URL"
