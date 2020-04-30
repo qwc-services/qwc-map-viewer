@@ -22,12 +22,9 @@ jwt = jwt_manager(app)
 tenant_handler = TenantHandler(app.logger)
 
 
-def qwc2_viewer_handler(identity):
-    """Get or create a QWC2Viewer instance for a tenant.
-
-    :param str identity: User identity
-    """
-    tenant = tenant_handler.tenant(identity)
+def qwc2_viewer_handler():
+    """Get or create a QWC2Viewer instance for a tenant."""
+    tenant = tenant_handler.tenant()
     handler = tenant_handler.handler('mapViewer', 'qwc', tenant)
     if handler is None:
         handler = tenant_handler.register_handler(
@@ -49,48 +46,45 @@ def with_no_cache_headers(response):
 # routes
 @app.route('/')
 def index():
-    identity = get_jwt_identity()
-    qwc2_viewer = qwc2_viewer_handler(identity)
-    return qwc2_viewer.qwc2_index(identity)
+    qwc2_viewer = qwc2_viewer_handler()
+    return qwc2_viewer.qwc2_index(get_jwt_identity())
 
 
 @app.route('/config.json')
 @jwt_optional
 def qwc2_config():
-    identity = get_jwt_identity()
-    qwc2_viewer = qwc2_viewer_handler(identity)
-    return with_no_cache_headers(qwc2_viewer.qwc2_config(identity))
+    qwc2_viewer = qwc2_viewer_handler()
+    return with_no_cache_headers(qwc2_viewer.qwc2_config(get_jwt_identity()))
 
 
 @app.route('/themes.json')
 @jwt_optional
 def qwc2_themes():
-    identity = get_jwt_identity()
-    qwc2_viewer = qwc2_viewer_handler(identity)
-    return with_no_cache_headers(qwc2_viewer.qwc2_themes(identity))
+    qwc2_viewer = qwc2_viewer_handler()
+    return with_no_cache_headers(qwc2_viewer.qwc2_themes(get_jwt_identity()))
 
 
 @app.route('/assets/<path:path>')
 def qwc2_assets(path):
-    qwc2_viewer = qwc2_viewer_handler(get_jwt_identity())
+    qwc2_viewer = qwc2_viewer_handler()
     return qwc2_viewer.qwc2_assets(path)
 
 
 @app.route('/dist/<path:path>')
 def qwc2_js(path):
-    qwc2_viewer = qwc2_viewer_handler(get_jwt_identity())
+    qwc2_viewer = qwc2_viewer_handler()
     return qwc2_viewer.qwc2_js(path)
 
 
 @app.route('/translations/<path:path>')
 def qwc2_translations(path):
-    qwc2_viewer = qwc2_viewer_handler(get_jwt_identity())
+    qwc2_viewer = qwc2_viewer_handler()
     return qwc2_viewer.qwc2_translations(path)
 
 
 @app.route('/favicon.ico')
 def favicon():
-    qwc2_viewer = qwc2_viewer_handler(get_jwt_identity())
+    qwc2_viewer = qwc2_viewer_handler()
     return qwc2_viewer.qwc2_favicon()
 
 
