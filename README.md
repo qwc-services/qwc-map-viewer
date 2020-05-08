@@ -103,6 +103,7 @@ Main optional QWC services:
  * `print_service_url`: QWC Print Service URL
  * `proxy_service_url`: Proxy Service URL
  * `search_service_url`: QWC Search Service URL
+ * `search_data_service_url`: QWC Search Result Service URL
 
 `qwc2_config` contains the QWC2 application configuration, with `config` corresponding to the contents of your standalone `config.json` file (see [Documentation](https://github.com/qgis/qwc2-demo-app/blob/master/doc/QWC2_Documentation.md#application-configuration-the-configjson-and-jsappconfigjs-files)).
 

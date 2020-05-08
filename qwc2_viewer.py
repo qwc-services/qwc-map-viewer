@@ -53,6 +53,8 @@ class QWC2Viewer:
             config.get('proxy_service_url'))
         self.search_service_url = self.__sanitize_url(
             config.get('search_service_url'))
+        self.search_data_service_url = self.__sanitize_url(
+            config.get('search_data_service_url'))
         # QWC service URLs for themes.json
         self.ogc_service_url = self.__sanitize_url(
             config.get('ogc_service_url', 'http://localhost:5013/'))
@@ -126,6 +128,8 @@ class QWC2Viewer:
             config['proxyServiceUrl'] = self.proxy_service_url
         if self.search_service_url:
             config['searchServiceUrl'] = self.search_service_url
+        if self.search_data_service_url:
+            config['searchDataServiceUrl'] = self.search_data_service_url
 
         config['wmsDpi'] = os.environ.get(
             'WMS_DPI', config.get('wmsDpi', '96'))
