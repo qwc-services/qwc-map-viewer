@@ -516,8 +516,10 @@ class QWC2Viewer:
         # collect permitted edit datasets
         edit_config = {}
         for name, config in item.get('editConfig').items():
-            # dataset name
+            # dataset name from editDataset or WMS and name
             dataset = "%s.%s" % (item['wms_name'], name)
+            dataset = config.get('editDataset', dataset)
+
             permitted_dataset = self.permitted_dataset(
                 dataset, config, identity
             )
