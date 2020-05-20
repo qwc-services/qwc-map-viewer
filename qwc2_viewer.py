@@ -483,7 +483,7 @@ class QWC2Viewer:
         :param set permitted_print_templates: List of permitted print templates
         """
         print_templates = [
-            template for template in item["print"]
+            template for template in item.get('print', [])
             if template['name'] in permitted_print_templates
         ]
 
