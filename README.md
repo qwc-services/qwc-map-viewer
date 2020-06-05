@@ -6,8 +6,6 @@ QWC Map Viewer
 
 Provide a [QWC2 Web Client](https://github.com/qgis/qwc2-demo-app) application using QWC services.
 
-**Note:**: Custom viewers have been replaced by tenants in v2.
-
 **Note:** Requires a QWC OGC service or QGIS server running on `ogc_service_url`. Additional QWC Services are optional.
 
 
@@ -26,10 +24,6 @@ Copy your QWC2 files from a production build (see [QWC2 Quick start](https://git
     cp config.json $DSTDIR/qwc2/config.json && \
     cd -
 
-Copy your QWC2 themes config file:
-
-    cp themesConfig.json $DSTDIR/qwc2/
-
 
 Configuration
 -------------
@@ -37,6 +31,7 @@ Configuration
 The static config and permission files are stored as JSON files in `$CONFIG_PATH` with subdirectories for each tenant,
 e.g. `$CONFIG_PATH/default/*.json`. The default tenant name is `default`.
 
+**Note:**: Custom viewers have been replaced by tenants in v2.
 
 ### Map Viewer config
 
@@ -267,11 +262,7 @@ qwc-map-viewer:
         - /PATH_TO_QWC2_BUILD/:/qwc2:ro
         - /PATH_TO_CONFIG:/srv/qwc_service/config:ro
 ```
-**Step 4: Build docker containers**
-
-    docker-compose build
-
-**Step 5: Start docker containers**
+**Step 4: Start docker containers**
 
     docker-compose up qwc-map-viewer
 
