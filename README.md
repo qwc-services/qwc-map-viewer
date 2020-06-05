@@ -1,12 +1,10 @@
 [![](https://github.com/qwc-services/qwc-map-viewer/workflows/build/badge.svg)](https://github.com/qwc-services/qwc-map-viewer/actions)
 [![](https://img.shields.io/docker/pulls/sourcepole/qwc-map-viewer-demo)](https://hub.docker.com/r/sourcepole/qwc-map-viewer-demo)
 
-QWC Map Viewer v2
-=================
+QWC Map Viewer
+==============
 
 Provide a [QWC2 Web Client](https://github.com/qgis/qwc2-demo-app) application using QWC services.
-
-**v2** (WIP): add support for multitenancy and replace QWC Config service and QWC2 config files with static config and permission files.
 
 **Note:**: Custom viewers have been replaced by tenants in v2.
 
@@ -235,7 +233,6 @@ To run this docker image you will need the following three additional services:
 
 * qwc-postgis
 * qwc-qgis-server
-* qwc-config-service
 * qwc-ogc-service
 * qwc-data-service
 
@@ -263,21 +260,12 @@ If you want to use your own QWC2 build then this is the docker image that you wa
 ```
 qwc-map-viewer:
     image: sourcepole/qwc-map-viewer-base
-    environment:
-        - CONFIG_SERVICE_URL=http://qwc-config-service:9090/
-        - QWC2_PATH=/qwc2/
-        - QWC2_CONFIG=/qwc2/config.json
-        - OGC_SERVICE_URL=/ows/
-        - DATA_SERVICE_URL=/api/v1/data/
     ports:
         - "127.0.0.1:5030:9090"
     # Here you mount your own QWC2 build
     volumes:
-    - /PATH_TO_QWC2_BUILD/:/qwc2:ro
-    depends_on:
-      - qwc-config-service
-      - qwc-ogc-service
-      - qwc-data-service
+        - /PATH_TO_QWC2_BUILD/:/qwc2:ro
+        - /PATH_TO_CONFIG:/srv/qwc_service/config:ro
 ```
 **Step 4: Build docker containers**
 
