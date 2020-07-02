@@ -99,6 +99,11 @@
           "type": "string",
           "format": "uri"
         },
+        "search_data_service_url": {
+          "description": "QWC Search Result Service URL",
+          "type": "string",
+          "format": "uri"
+        },
         "search_service_url": {
           "description": "QWC Search Service URL",
           "type": "string",
