@@ -174,14 +174,16 @@ class QWC2Viewer:
         :param list(obj) plugins: Plugins configurations
         :param bool signed_in: Whether user is signed in
         """
-        topbars = list(filter(lambda entry: entry['name'] == 'TopBar', plugins))
-        for topbar in topbars:
-            if "menuItems" in topbar["cfg"]:
+        for plugin in plugins:
+            if 'cfg' not in plugin:
+                # skip plugin without cfg
+                continue
+            if "menuItems" in plugin["cfg"]:
                 self.__replace_login__helper_items(
-                    topbar["cfg"]["menuItems"], signed_in)
-            if "toolbarItems" in topbar["cfg"]:
+                    plugin["cfg"]["menuItems"], signed_in)
+            if "toolbarItems" in plugin["cfg"]:
                 self.__replace_login__helper_items(
-                    topbar["cfg"]["toolbarItems"], signed_in)
+                    plugin["cfg"]["toolbarItems"], signed_in)
 
     def __replace_login__helper_items(self, items, signed_in):
         """Replace Login with Logout if identity is not None on Login items in
