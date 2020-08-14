@@ -390,6 +390,9 @@ class QWC2Viewer:
         # filter unused external layers
         self.filter_external_layers(themes)
 
+        # filter unused theme info links
+        self.filter_theme_info_links(themes)
+
         return themes
 
     def permitted_theme_group(self, theme_group, identity):
@@ -456,6 +459,7 @@ class QWC2Viewer:
         self.filter_edit_config(item, identity)
         self.filter_item_background_layers(item, identity)
         self.filter_item_external_layers(item, permitted_layers)
+        self.filter_item_theme_info_links(item, identity)
 
         return item
 
@@ -608,7 +612,7 @@ class QWC2Viewer:
         """
         if 'externalLayers' in themes:
             # collect used external layer names
-            external_layers = self.collectExternalLayers(themes)
+            external_layers = self.collect_external_layers(themes)
 
             # filter unused external layers
             themes["externalLayers"] = [
@@ -616,7 +620,7 @@ class QWC2Viewer:
                 if layer['name'] in external_layers
             ]
 
-    def collectExternalLayers(self, theme_group):
+    def collect_external_layers(self, theme_group):
         """Recursively collect used external layer names.
 
         :param obj theme_group: Theme group
@@ -628,7 +632,7 @@ class QWC2Viewer:
 
         if 'subdirs' in theme_group:
             for subgroup in theme_group['subdirs']:
-                external_layers.update(self.collectExternalLayers(subgroup))
+                external_layers.update(self.collect_external_layers(subgroup))
 
         return external_layers
 
@@ -644,3 +648,60 @@ class QWC2Viewer:
                 layer for layer in item['externalLayers']
                 if layer.get('internalLayer') in permitted_layers
             ]
+
+    def filter_theme_info_links(self, themes):
+        """Filter unused theme info links.
+
+        :param obj themes: qwc2_themes
+        """
+        if 'themeInfoLinks' in themes:
+            # collect used theme info links
+            theme_info_links = self.collect_theme_info_links(themes)
+
+            # filter unused theme info links
+            themes["themeInfoLinks"] = [
+                theme_info_link for theme_info_link in themes["themeInfoLinks"]
+                if theme_info_link['name'] in theme_info_links
+            ]
+
+    def collect_theme_info_links(self, theme_group):
+        """Recursively collect used theme info link entries.
+
+        :param obj theme_group: Theme group
+        """
+        theme_info_links = set()
+        for item in theme_group['items']:
+            for entry in item.get('themeInfoLinks', {}).get('entries', []):
+                theme_info_links.add(entry)
+
+        if 'subdirs' in theme_group:
+            for subgroup in theme_group['subdirs']:
+                theme_info_links.update(
+                    self.collect_theme_info_links(subgroup)
+                )
+
+        return theme_info_links
+
+    def filter_item_theme_info_links(self, item, identity):
+        """Filter theme item theme info links by permissions.
+
+        :param obj item: Theme item
+        :param obj identity: User identity
+        """
+        if 'themeInfoLinks' in item:
+            # get permissions for theme info links
+            permitted_theme_info_links = \
+                self.permissions_handler.resource_permissions(
+                    'theme_info_links', identity
+                )
+
+            # filter theme info links by permissions
+            entries = [
+                entry for entry in item['themeInfoLinks'].get('entries', [])
+                if entry in permitted_theme_info_links
+            ]
+            if entries:
+                item['themeInfoLinks']['entries'] = entries
+            else:
+                # remove if no entries permitted
+                del item['themeInfoLinks']
