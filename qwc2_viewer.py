@@ -393,6 +393,9 @@ class QWC2Viewer:
         # filter unused theme info links
         self.filter_theme_info_links(themes)
 
+        # filter unused plugin data
+        self.filter_plugin_data(themes)
+
         return themes
 
     def permitted_theme_group(self, theme_group, identity):
@@ -460,6 +463,7 @@ class QWC2Viewer:
         self.filter_item_background_layers(item, identity)
         self.filter_item_external_layers(item, permitted_layers)
         self.filter_item_theme_info_links(item, identity)
+        self.filter_item_plugin_data(item, identity)
 
         return item
 
@@ -661,7 +665,7 @@ class QWC2Viewer:
             # filter unused theme info links
             themes["themeInfoLinks"] = [
                 theme_info_link for theme_info_link in themes["themeInfoLinks"]
-                if theme_info_link['name'] in theme_info_links
+                if theme_info_link.get('name') in theme_info_links
             ]
 
     def collect_theme_info_links(self, theme_group):
@@ -705,3 +709,85 @@ class QWC2Viewer:
             else:
                 # remove if no entries permitted
                 del item['themeInfoLinks']
+
+    def filter_plugin_data(self, themes):
+        """Filter unused plugin data.
+
+        :param obj themes: qwc2_themes
+        """
+        if 'pluginData' in themes:
+            # collect used plugin data
+            plugin_data = self.collect_plugin_data(themes)
+
+            # filter unused plugin data
+            themes_plugin_data = {}
+            for plugin, resources in themes["pluginData"].items():
+                if plugin in plugin_data:
+                    # filter plugin specific resources
+                    resources = [
+                        resource for resource in resources
+                        if resource.get('name') in plugin_data[plugin]
+                    ]
+                    if resources:
+                        themes_plugin_data[plugin] = resources
+
+            themes["pluginData"] = themes_plugin_data
+
+    def collect_plugin_data(self, theme_group):
+        """Recursively collect used plugin data names.
+
+        :param obj theme_group: Theme group
+        """
+        plugin_data = {}
+        for item in theme_group['items']:
+            for plugin, resources in item.get('pluginData', {}).items():
+                if plugin not in plugin_data:
+                    plugin_data[plugin] = set()
+                plugin_data[plugin].update(resources)
+
+        if 'subdirs' in theme_group:
+            for subgroup in theme_group['subdirs']:
+                sub_plugin_data = self.collect_plugin_data(subgroup)
+                for plugin, resources in sub_plugin_data.items():
+                    if plugin not in plugin_data:
+                        plugin_data[plugin] = set()
+                    plugin_data[plugin].update(resources)
+
+        return plugin_data
+
+    def filter_item_plugin_data(self, item, identity):
+        """Filter theme item plugin data by permissions.
+
+        :param obj item: Theme item
+        :param obj identity: User identity
+        """
+        if 'pluginData' in item:
+            # get permissions for theme info links
+            permitted_plugin_data = \
+                self.permissions_handler.resource_permissions(
+                    'plugin_data', identity
+                )
+
+            # lookup for permissions by plugin
+            plugin_permissions = {}
+            for permission in permitted_plugin_data:
+                plugin_permissions[permission.get('name')] = \
+                    permission.get('resources', [])
+
+            # filter plugin data by permissions
+            plugin_data = {}
+            for plugin, resources in item['pluginData'].items():
+                if plugin in plugin_permissions:
+                    # filter plugin specific resources
+                    resources = [
+                        resource for resource in resources
+                        if resource in plugin_permissions[plugin]
+                    ]
+                    if resources:
+                        plugin_data[plugin] = resources
+
+            if plugin_data:
+                item['pluginData'] = plugin_data
+            else:
+                # remove if no plugin data permitted
+                del item['pluginData']
