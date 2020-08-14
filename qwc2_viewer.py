@@ -461,6 +461,7 @@ class QWC2Viewer:
         self.filter_print_templates(item, permitted_print_templates)
         self.filter_edit_config(item, identity)
         self.filter_item_background_layers(item, identity)
+        self.filter_item_search_providers(item, identity)
         self.filter_item_external_layers(item, permitted_layers)
         self.filter_item_theme_info_links(item, identity)
         self.filter_item_plugin_data(item, identity)
@@ -608,6 +609,69 @@ class QWC2Viewer:
             layer for layer in item['backgroundLayers']
             if layer['name'] in permitted_bg_layers
         ]
+
+    def filter_item_search_providers(self, item, identity):
+        """Filter theme item search providers by permissions.
+
+        :param obj item: Theme item
+        :param obj identity: User identity
+        """
+        if 'searchProviders' in item:
+            # get permissions for Solr facets
+            permitted_solr_facets = \
+                self.permissions_handler.resource_permissions(
+                    'solr_facets', identity
+                )
+
+            for search_provider in item['searchProviders']:
+                if (
+                    'provider' in search_provider
+                    and search_provider['provider'] == 'solr'
+                ):
+                    # filter Solr facets by permissions
+                    if 'default' in search_provider:
+                        search_provider['default'] = [
+                            facet for facet in search_provider['default']
+                            if facet in permitted_solr_facets
+                        ]
+                    if 'layers' in search_provider:
+                        layers = {}
+                        for layer, facet in search_provider['layers'].items():
+                            if facet in permitted_solr_facets:
+                                layers[layer] = facet
+                        if layers:
+                            search_provider['layers'] = layers
+                        else:
+                            # remove if no layer search permitted
+                            del search_provider['layers']
+
+                    # filter layer searchterms
+                    self.filter_layer_searchterms(item, permitted_solr_facets)
+
+    def filter_layer_searchterms(self, layer, permitted_solr_facets):
+        """Recursively filter layer searchterms by permissions.
+
+        :param obj layer: Layer or group layer
+        :param set permitted_solr_facets: List of permitted Solr facets
+        """
+        if layer.get('sublayers'):
+            # group layer
+            for sublayer in layer['sublayers']:
+                # recursively filter sub layer
+                self.filter_layer_searchterms(sublayer, permitted_solr_facets)
+        else:
+            # data layer
+            if 'searchterms' in layer:
+                # filter searchterms by permissions
+                searchterms = [
+                    facet for facet in layer['searchterms']
+                    if facet in permitted_solr_facets
+                ]
+                if searchterms:
+                    layer['searchterms'] = searchterms
+                else:
+                    # remove if no layer search permitted
+                    del layer['searchterms']
 
     def filter_external_layers(self, themes):
         """Filter unused external layers.
