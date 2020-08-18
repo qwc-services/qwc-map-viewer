@@ -209,17 +209,18 @@ class QWC2Viewer:
         """
         for key in viewer_task_permissions:
             if not viewer_task_permissions[key]:
-                topbars = list(filter(
-                    lambda entry: entry['name'] == 'TopBar', plugins
-                ))
-                for topbar in topbars:
-                    if 'menuItems' in topbar['cfg']:
+                for plugin in plugins:
+                    if 'cfg' not in plugin:
+                        # skip plugin without cfg
+                        continue
+
+                    if 'menuItems' in plugin['cfg']:
                         self.__filter_config_items(
-                            topbar['cfg']['menuItems'], key
+                            plugin['cfg']['menuItems'], key
                         )
-                    if 'toolbarItems' in topbar['cfg']:
+                    if 'toolbarItems' in plugin['cfg']:
                         self.__filter_config_items(
-                            topbar['cfg']['toolbarItems'], key
+                            plugin['cfg']['toolbarItems'], key
                         )
 
     def __filter_config_items(self, items, key):
