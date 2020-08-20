@@ -827,17 +827,22 @@ class QWC2Viewer:
         :param obj identity: User identity
         """
         if 'pluginData' in item:
-            # get permissions for theme info links
+            # get permissions for theme plugin data
             permitted_plugin_data = \
                 self.permissions_handler.resource_permissions(
                     'plugin_data', identity
                 )
 
-            # lookup for permissions by plugin
+            # lookup for combined permissions by plugin
             plugin_permissions = {}
             for permission in permitted_plugin_data:
-                plugin_permissions[permission.get('name')] = \
+                # collect permitted plugin resources
+                plugin = permission.get('name')
+                if plugin not in plugin_permissions:
+                    plugin_permissions[plugin] = set()
+                plugin_permissions[plugin].update(
                     permission.get('resources', [])
+                )
 
             # filter plugin data by permissions
             plugin_data = {}
