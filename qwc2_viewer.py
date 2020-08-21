@@ -568,7 +568,7 @@ class QWC2Viewer:
         # filter attributes by permissions
         config['fields'] = [
             field for field in config.get('fields', [])
-            if field['name'] in permitted_attributes
+            if field['id'] in permitted_attributes
         ]
 
         return config
