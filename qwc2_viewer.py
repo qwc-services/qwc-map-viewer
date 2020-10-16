@@ -256,7 +256,7 @@ class QWC2Viewer:
             item.update({
                 'url': "%s%s" % (self.ogc_service_url, wms_name),
                 'featureInfoUrl': "%s%s" % (self.info_service_url, wms_name),
-                'legendUrl': "%s%s" % (self.legend_service_url, wms_name)
+                'legendUrl': "%s%s?" % (self.legend_service_url, wms_name) + (item["extraLegendParameters"] if "extraLegendParameters" in item else "")
             })
             if item.get('print'):
                 # add print URL only if print templates available
