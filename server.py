@@ -54,7 +54,7 @@ def index():
 @jwt_optional
 def qwc2_config():
     qwc2_viewer = qwc2_viewer_handler()
-    return with_no_cache_headers(qwc2_viewer.qwc2_config(get_jwt_identity()))
+    return with_no_cache_headers(qwc2_viewer.qwc2_config(get_jwt_identity(), request.args))
 
 
 @app.route('/themes.json')

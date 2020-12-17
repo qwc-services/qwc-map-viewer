@@ -91,7 +91,7 @@ class QWC2Viewer:
         self.logger.debug("Using index '%s'" % viewer_index_file)
         return send_from_directory(self.config_dir, 'index.html')
 
-    def qwc2_config(self, identity):
+    def qwc2_config(self, identity, params):
         """Return QWC2 config.json for user.
 
         :param obj identity: User identity
@@ -146,9 +146,9 @@ class QWC2Viewer:
         # Look for any Login item, and change it to logout if user is signed in
         signed_in = username is not None
         self.__replace_login__helper_plugins(
-            config['plugins']['mobile'], signed_in)
+            config['plugins']['mobile'], signed_in, params.get("autologin") is not None)
         self.__replace_login__helper_plugins(
-            config['plugins']['desktop'], signed_in)
+            config['plugins']['desktop'], signed_in, params.get("autologin") is not None)
 
         # filter any restricted viewer task items
         viewer_task_permissions = self.viewer_task_permissions(identity)
@@ -167,7 +167,7 @@ class QWC2Viewer:
         """
         return (url.rstrip('/') + '/') if url else ""
 
-    def __replace_login__helper_plugins(self, plugins, signed_in):
+    def __replace_login__helper_plugins(self, plugins, signed_in, autologin):
         """Search plugins configurations and call
            self.__replace_login__helper_items on menuItems and toolbarItems
 
@@ -180,24 +180,31 @@ class QWC2Viewer:
                 continue
             if "menuItems" in plugin["cfg"]:
                 self.__replace_login__helper_items(
-                    plugin["cfg"]["menuItems"], signed_in)
+                    plugin["cfg"]["menuItems"], signed_in, autologin)
             if "toolbarItems" in plugin["cfg"]:
                 self.__replace_login__helper_items(
-                    plugin["cfg"]["toolbarItems"], signed_in)
+                    plugin["cfg"]["toolbarItems"], signed_in, autologin)
 
-    def __replace_login__helper_items(self, items, signed_in):
+    def __replace_login__helper_items(self, items, signed_in, autologin):
         """Replace Login with Logout if identity is not None on Login items in
            menuItems and toolbarItems.
 
         :param list(obj) items: Menu or toolbar items
         :param bool signed_in: Whether user is signed in
         """
-        for item in items:
-            if item["key"] == "Login" and signed_in:
-                item["key"] = "Logout"
-                item["icon"] = "logout"
+        removeIndex = None
+        for (idx, item) in enumerate(items):
+            if item["key"] == "Login":
+                if autologin:
+                    removeIndex = idx
+                    break
+                elif signed_in:
+                    item["key"] = "Logout"
+                    item["icon"] = "logout"
             elif "subitems" in item:
-                self.__replace_login__helper_items(item["subitems"], signed_in)
+                self.__replace_login__helper_items(item["subitems"], signed_in, autologin)
+        if removeIndex is not None:
+            del items[removeIndex]
 
     def __filter_restricted_viewer_tasks(self, plugins,
                                          viewer_task_permissions):
