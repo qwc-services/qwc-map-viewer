@@ -115,7 +115,10 @@
         },
         "show_restricted_themes_whitelist": {
           "description": "Whitelist of restricted theme names to include in themes.json. If empty, all restricted themes are shown.",
-          "type": "string"
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
         }
       },
       "required": [
