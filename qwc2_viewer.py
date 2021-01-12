@@ -65,6 +65,9 @@ class QWC2Viewer:
         self.print_service_url = self.__sanitize_url(
             config.get('print_service_url', self.ogc_service_url))
 
+        self.show_restricted_themes = config.get('show_restricted_themes', False)
+        self.show_restricted_themes_whitelist = config.get('show_restricted_themes_whitelist', "")
+
         # get config dir for tenant
         self.config_dir = os.path.dirname(
             RuntimeConfig.config_file_path('mapViewer', tenant)
@@ -282,6 +285,8 @@ class QWC2Viewer:
         for subdir in subdirs:
             if 'items' in subdir:
                 for item in subdir['items']:
+                    if not item.get('wms_name'):
+                        continue
                     wms_name = item['wms_name']
                     item.update({
                         'url': "%s%s" % (ogc_server_url, wms_name),
@@ -382,6 +387,8 @@ class QWC2Viewer:
             permitted_item = self.permitted_theme_item(item, identity)
             if permitted_item:
                 items.append(permitted_item)
+            else:
+                self.add_restricted_item(items, item)
 
         themes['items'] = items
 
@@ -418,6 +425,8 @@ class QWC2Viewer:
             permitted_item = self.permitted_theme_item(item, identity)
             if permitted_item:
                 items.append(permitted_item)
+            else:
+                self.add_restricted_item(items, item)
 
         theme_group['items'] = items
 
@@ -436,6 +445,25 @@ class QWC2Viewer:
             return None
 
         return theme_group
+
+    def add_restricted_item(self, items, item):
+        """Add restricted theme item placeholders if enabled by configuration
+
+        :param obj items: Items list to which to add the placeholder to
+        :param obj item: The item for which to add the placeholder
+        """
+        if not self.show_restricted_themes:
+            return
+        if self.show_restricted_themes_whitelist and not item["name"] in self.show_restricted_themes_whitelist:
+            return
+
+        items.append({
+            "id": item["id"],
+            "name": item["name"],
+            "title": item["title"],
+            "thumbnail": item["thumbnail"],
+            "restricted": True
+        })
 
     def permitted_theme_item(self, item, identity):
         """Return theme item filtered by permissions.

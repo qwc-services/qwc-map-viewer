@@ -108,6 +108,14 @@
           "description": "QWC Search Service URL",
           "type": "string",
           "format": "uri"
+        },
+        "show_restricted_themes": {
+          "description": "Whether to insert placeholder items for restricted themes in themes.json",
+          "type": "boolean"
+        },
+        "show_restricted_themes_whitelist": {
+          "description": "Whitelist of restricted theme names to include in themes.json. If empty, all restricted themes are shown.",
+          "type": "string"
         }
       },
       "required": [
