@@ -197,11 +197,11 @@ class QWC2Viewer:
         """
         removeIndex = None
         for (idx, item) in enumerate(items):
-            if item["key"] == "Login":
+            if item["key"] == "Login" and signed_in:
                 if autologin:
                     removeIndex = idx
                     break
-                elif signed_in:
+                else:
                     item["key"] = "Logout"
                     item["icon"] = "logout"
             elif "subitems" in item:
