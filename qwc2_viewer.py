@@ -138,20 +138,24 @@ class QWC2Viewer:
             'WMS_DPI', config.get('wmsDpi', '96'))
 
         username = None
+        autologin = None
         if identity:
             if isinstance(identity, dict):
                 username = identity.get('username')
                 # NOTE: ignore group from identity
+                autologin = identity.get('autologin')
             else:
                 # identity is username
                 username = identity
 
         # Look for any Login item, and change it to logout if user is signed in
         signed_in = username is not None
+        autologin = (autologin is not None) or (
+            params.get("autologin") is not None)
         self.__replace_login__helper_plugins(
-            config['plugins']['mobile'], signed_in, params.get("autologin") is not None)
+            config['plugins']['mobile'], signed_in, autologin)
         self.__replace_login__helper_plugins(
-            config['plugins']['desktop'], signed_in, params.get("autologin") is not None)
+            config['plugins']['desktop'], signed_in, autologin)
 
         # filter any restricted viewer task items
         viewer_task_permissions = self.viewer_task_permissions(identity)
