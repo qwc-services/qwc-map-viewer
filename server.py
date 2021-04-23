@@ -2,13 +2,15 @@ import logging
 import os
 import requests
 
-from flask import json, Flask, request, jsonify
+from flask import json, Flask, request, jsonify, redirect
 from flask_jwt_extended import jwt_optional, get_jwt_identity
 
 from qwc_services_core.jwt import jwt_manager
-from qwc_services_core.tenant_handler import TenantHandler
+from qwc_services_core.tenant_handler import TenantHandler, TenantPrefixMiddleware, TenantSessionInterface
 from qwc2_viewer import QWC2Viewer
 
+AUTH_PATH = os.environ.get('AUTH_PATH', '/auth')
+AUTH_REQUIRED = os.environ.get('AUTH_REQUIRED', False)
 
 # Flask application
 app = Flask(__name__)
@@ -42,6 +44,22 @@ def with_no_cache_headers(response):
     response.headers["Expires"] = "0"
     return response
 
+app.wsgi_app = TenantPrefixMiddleware(app.wsgi_app)
+app.session_interface = TenantSessionInterface(os.environ)
+
+def auth_path_prefix():
+    path = app.session_interface.tenant_path_prefix() + AUTH_PATH
+    return path.replace("//", "/")
+
+@app.before_request
+@jwt_optional
+def assert_user_is_logged():
+    if AUTH_REQUIRED:
+        identity = get_jwt_identity()
+        if identity is None:
+            app.logger.info("Access denied, authentication required")
+            prefix = auth_path_prefix()
+            return redirect(prefix + '/login?url=%s' % request.url)
 
 # routes
 @app.route('/')
