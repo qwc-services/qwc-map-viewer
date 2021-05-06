@@ -48,8 +48,7 @@ app.wsgi_app = TenantPrefixMiddleware(app.wsgi_app)
 app.session_interface = TenantSessionInterface(os.environ)
 
 def auth_path_prefix():
-    path = app.session_interface.tenant_path_prefix() + AUTH_PATH
-    return path.replace("//", "/")
+    return app.session_interface.tenant_path_prefix().rstrip("/") + "/" + AUTH_PATH.lstrip("/")
 
 @app.before_request
 @jwt_optional
