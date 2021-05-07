@@ -264,48 +264,28 @@ class QWC2Viewer:
         # filter by permissions
         themes = self.permitted_themes(identity)
 
+        self.__update_service_urls(themes)
+
+        return jsonify({"themes": themes})
+
+    def __update_service_urls(self, themes):
         for item in themes.get('items', []):
-            # update service URLs
+            if not item.get('wms_name'):
+                continue
             wms_name = item['wms_name']
             item.update({
                 'url': "%s%s" % (self.ogc_service_url, wms_name),
                 'featureInfoUrl': "%s%s" % (self.info_service_url, wms_name),
-                'legendUrl': "%s%s?" % (self.legend_service_url, wms_name) + (item["extraLegendParameters"] if "extraLegendParameters" in item else "")
+                'legendUrl': "%s%s?" % (self.legend_service_url, wms_name) + (
+                    item["extraLegendParameters"]
+                    if "extraLegendParameters" in item else "")
             })
             if item.get('print'):
                 # add print URL only if print templates available
                 item['printUrl'] = "%s%s" % (self.print_service_url, wms_name)
 
-        subdirs = themes.get('subdirs', [])
-        self.__update_subdir_urls(
-            subdirs, self.ogc_service_url, self.info_service_url,
-            self.legend_service_url, self.print_service_url
-        )
-
-        return jsonify({"themes": themes})
-
-    def __update_subdir_urls(self, subdirs, ogc_server_url, info_service_url,
-                             legend_service_url, print_service_url):
-        for subdir in subdirs:
-            if 'items' in subdir:
-                for item in subdir['items']:
-                    if not item.get('wms_name'):
-                        continue
-                    wms_name = item['wms_name']
-                    item.update({
-                        'url': "%s%s" % (ogc_server_url, wms_name),
-                        'featureInfoUrl': "%s%s" % (info_service_url, wms_name),
-                        'legendUrl': "%s%s" % (legend_service_url, wms_name)
-                    })
-                    if item.get('print'):
-                        # add print URL only if print templates available
-                        item['printUrl'] = "%s%s" % (
-                            print_service_url, wms_name
-                        )
-            if 'subdirs' in subdir:
-                self.__update_subdir_urls(subdir['subdirs'], ogc_server_url,
-                                          info_service_url, legend_service_url,
-                                          print_service_url)
+        for subdir in themes.get('subdirs', []):
+            self.__update_service_urls(subdir)
 
     def qwc2_assets(self, path):
         """Return QWC2 asset from assets/.
