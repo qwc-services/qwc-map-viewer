@@ -1,6 +1,8 @@
+import base64
 import os
+import tempfile
 
-from flask import json, jsonify, send_from_directory
+from flask import abort, json, jsonify, send_from_directory
 
 from qwc_services_core.permissions_reader import PermissionsReader
 from qwc_services_core.runtime_config import RuntimeConfig
@@ -11,6 +13,12 @@ class QWC2Viewer:
 
     Provide configurations for QWC2 map viewer.
     """
+
+    # prefix for marking extracted Base64 encoded images in assets URL
+    # e.g. '/assets/img/base64/mapthumbs/qwc_demo.png'
+    BASE64_IMAGE_ROUTE_PREFIX = 'img/base64/'
+
+    DEFAULT_THUMBNAIL_IMAGE = 'img/mapthumbs/default.jpg'
 
     def __init__(self, tenant, logger):
         """Constructor
@@ -72,6 +80,10 @@ class QWC2Viewer:
         self.config_dir = os.path.dirname(
             RuntimeConfig.config_file_path('mapViewer', tenant)
         )
+
+        # temporary target dir for any Base64 encoded thumbnail images
+        # NOTE: this dir will be cleaned up automatically on reload
+        self.images_temp_dir = None
 
         self.resources = self.load_resources(config)
         self.permissions_handler = PermissionsReader(tenant, logger)
@@ -288,13 +300,25 @@ class QWC2Viewer:
             self.__update_service_urls(subdir)
 
     def qwc2_assets(self, path):
-        """Return QWC2 asset from assets/.
+        """Return QWC2 asset from assets/ or temporary image dir.
 
         :param str path: Asset path
         """
-        return send_from_directory(
-            os.path.join(self.qwc2_path, 'assets'), path
-        )
+        if not path.startswith(self.BASE64_IMAGE_ROUTE_PREFIX):
+            # send file from assets/
+            return send_from_directory(
+                os.path.join(self.qwc2_path, 'assets'), path
+            )
+        else:
+            if self.images_temp_dir is not None:
+                # send extracted Base64 encoded image (remove prefix)
+                return send_from_directory(
+                    self.images_temp_dir.name,
+                    path[len(self.BASE64_IMAGE_ROUTE_PREFIX):]
+                )
+            else:
+                # temp dir not present
+                return abort(404)
 
     def qwc2_js(self, path):
         """Return QWC2 Javascript from dist/.
@@ -329,10 +353,104 @@ class QWC2Viewer:
         # use contents of 'themes'
         qwc2_themes = qwc2_themes.get('themes', {})
 
+        # extract Base64 encoded thumbnail images
+        self.extract_base64_theme_item_thumbnail_images(qwc2_themes)
+        self.extract_base64_background_layer_thumbnail_images(qwc2_themes)
+
         return {
             'qwc2_config': qwc2_config,
             'qwc2_themes': qwc2_themes
         }
+
+    def extract_base64_theme_item_thumbnail_images(self, theme_group):
+        """Recursively extract any Base64 encoded theme item thumbnail images
+        to files.
+
+        :param obj theme_group: Theme group
+        """
+        for item in theme_group.get('items', []):
+            if 'thumbnail' not in item:
+                image_path = None
+                if 'thumbnail_base64' in item:
+                    image_path = self.extract_base64_thumbnail_image(
+                        item['name'], item['thumbnail_base64']
+                    )
+                    # remove thumbnail_base64
+                    del item['thumbnail_base64']
+                if image_path is None:
+                    # set default if missing or error on extract
+                    image_path = self.DEFAULT_THUMBNAIL_IMAGE
+
+                # update thumbnail path
+                item['thumbnail'] = image_path
+
+        if 'subdirs' in theme_group:
+            for subgroup in theme_group['subdirs']:
+                self.extract_base64_theme_item_thumbnail_images(subgroup)
+
+    def extract_base64_background_layer_thumbnail_images(self, themes):
+        """Extract any Base64 encoded background layer thumbnail images
+        to files.
+
+        :param obj themes: qwc2_themes
+        """
+        for layer in themes.get('backgroundLayers', []):
+            if 'thumbnail' not in layer:
+                image_path = None
+                if 'thumbnail_base64' in layer:
+                    image_path = self.extract_base64_thumbnail_image(
+                        "bg_%s" % layer['name'], layer['thumbnail_base64']
+                    )
+                    # remove thumbnail_base64
+                    del layer['thumbnail_base64']
+                if image_path is None:
+                    # set default if missing or error on extract
+                    image_path = self.DEFAULT_THUMBNAIL_IMAGE
+
+                # update thumbnail path
+                layer['thumbnail'] = image_path
+
+    def extract_base64_thumbnail_image(self, name, thumbnail_base64):
+        """Extract Base64 encoded thumbnail image to file and return
+        its assets path.
+
+        :param str name: Image name
+        :param str thumbnail_base64: Base64 encoded image
+        """
+        image_path = None
+
+        try:
+            if self.images_temp_dir is None:
+                # create temporary target dir
+                self.images_temp_dir = tempfile.TemporaryDirectory(
+                    prefix='qwc-map-viewer-'
+                )
+                os.makedirs(
+                    os.path.join(self.images_temp_dir.name, 'mapthumbs')
+                )
+
+            # NOTE: do not add a random suffix so it may be cached in clients
+            filename = "%s.png" % name
+
+            # decode and save as image file
+            file_path = os.path.join(
+                self.images_temp_dir.name, 'mapthumbs', filename
+            )
+            with open(file_path, 'wb') as f:
+                f.write(base64.b64decode(thumbnail_base64))
+
+            # mark as extracted image for assets URL
+            image_path = os.path.join(
+                self.BASE64_IMAGE_ROUTE_PREFIX, 'mapthumbs', filename
+            )
+        except Exception as e:
+            image_path = None
+            self.logger.error(
+                "Could not extract Base64 encoded thumbnail image for '%s':"
+                "\n%s" % (name, e)
+            )
+
+        return image_path
 
     def viewer_task_permissions(self, identity):
         """Return permissions for viewer tasks.
