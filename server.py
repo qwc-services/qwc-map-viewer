@@ -10,7 +10,7 @@ from qwc_services_core.tenant_handler import TenantHandler, TenantPrefixMiddlewa
 from qwc2_viewer import QWC2Viewer
 
 AUTH_PATH = os.environ.get('AUTH_PATH', '/auth')
-AUTH_REQUIRED = os.environ.get('AUTH_REQUIRED', False)
+AUTH_REQUIRED = os.environ.get('AUTH_REQUIRED', '0') not in [0, "0", "False", "FALSE"]
 
 # Flask application
 app = Flask(__name__)
