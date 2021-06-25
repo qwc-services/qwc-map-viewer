@@ -26,88 +26,71 @@
         },
         "auth_service_url": {
           "description": "QWC Auth Service URL",
-          "type": "string",
-          "format": "uri"
+          "type": "string"
         },
         "ccc_config_service_url": {
           "description": "CCC Service URL",
-          "type": "string",
-          "format": "uri"
+          "type": "string"
         },
         "data_service_url": {
           "description": "QWC Data Service URL",
-          "type": "string",
-          "format": "uri"
+          "type": "string"
         },
         "dataproduct_service_url": {
           "description": "DataProduct Service URL",
-          "type": "string",
-          "format": "uri"
+          "type": "string"
         },
         "document_service_url": {
           "description": "Document Service URL",
-          "type": "string",
-          "format": "uri"
+          "type": "string"
         },
         "elevation_service_url": {
           "description": "QWC Elevation Service URL",
-          "type": "string",
-          "format": "uri"
+          "type": "string"
         },
         "info_service_url": {
           "description": "QWC FeatureInfo Service URL",
-          "type": "string",
-          "format": "uri"
+          "type": "string"
         },
         "landreg_service_url": {
           "description": "Land Register Extract Service URL",
-          "type": "string",
-          "format": "uri"
+          "type": "string"
         },
         "legend_service_url": {
           "description": "QWC Legend Service URL",
-          "type": "string",
-          "format": "uri"
+          "type": "string"
         },
         "mapinfo_service_url": {
           "description": "MapInfo Service URL",
-          "type": "string",
-          "format": "uri"
+          "type": "string"
         },
         "ogc_service_url": {
           "description": "QWC OGC Service URL",
-          "type": "string",
-          "format": "uri"
+          "type": "string"
         },
         "permalink_service_url": {
           "description": "QWC Permalink Service URL",
-          "type": "string",
-          "format": "uri"
+          "type": "string"
         },
         "plotinfo_service_url": {
           "description": "PlotInfo Service URL",
-          "type": "string",
-          "format": "uri"
+          "type": "string"
         },
         "print_service_url": {
           "description": "QWC Print Service URL",
-          "type": "string",
-          "format": "uri"
+          "type": "string"
         },
         "proxy_service_url": {
           "description": "Proxy Service URL",
-          "type": "string",
-          "format": "uri"
+          "type": "string"
         },
         "search_data_service_url": {
           "description": "QWC Search Result Service URL",
-          "type": "string",
-          "format": "uri"
+          "type": "string"
         },
         "search_service_url": {
           "description": "QWC Search Service URL",
-          "type": "string",
-          "format": "uri"
+          "type": "string"
         },
         "show_restricted_themes": {
           "description": "Whether to insert placeholder items for restricted themes in themes.json",
@@ -142,7 +125,7 @@
             },
             "config": {
               "description": "QWC2 application configuration (config.json)",
-              "$ref": "https://raw.githubusercontent.com/qgis/qwc2/master/schemas/config.json"
+              "type": "object"
             }
           },
           "required": [
@@ -151,7 +134,15 @@
         },
         "qwc2_themes": {
           "description": "QWC2 themes configuration (themes.json)",
-          "$ref": "https://raw.githubusercontent.com/qgis/qwc2/master/schemas/themes.json"
+          "type": "object",
+          "properties": {
+            "themes": {
+              "type": "object"
+            }
+          },
+          "required": [
+            "themes"
+          ]
         }
       },
       "required": [
