@@ -1,5 +1,5 @@
 [![](https://github.com/qwc-services/qwc-map-viewer/workflows/build/badge.svg)](https://github.com/qwc-services/qwc-map-viewer/actions)
-[![](https://img.shields.io/docker/pulls/sourcepole/qwc-map-viewer-demo)](https://hub.docker.com/r/sourcepole/qwc-map-viewer-demo)
+[![docker](https://img.shields.io/docker/v/sourcepole/qwc-map-viewer-demo?label=Docker%20image&sort=semver)](https://hub.docker.com/r/sourcepole/qwc-map-viewer-demo)
 
 QWC Map Viewer
 ==============
