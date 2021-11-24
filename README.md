@@ -219,8 +219,31 @@ Sample requests:
     curl 'http://localhost:5030/themes.json'
 
 
-Docker usage
-------------
+Docker images
+-------------
+
+The following Docker images are available:
+* `sourcepole/qwc-map-viewer-base`: Map viewer service
+* `sourcepole/qwc-map-viewer-demo`: Map viewer service with qwc-demo-app viewer
+
+Dependencies:
+
+        git repos                Docker images
+
+     ┌───────────────┐
+     │     qwc2      │
+     └───────┬───────┘
+             │submodule
+     ┌───────▼───────┐
+     │ qwc-demo-app  ├────────────┐
+     │    config.json│ CI Build   │
+     └───────────────┘      ┌─────▼───────────────┐
+                         ┌──► qwc-map-viewer-demo │
+     ┌───────────────┐   │  └─────────────────────┘
+     │ qwc-map-viewer├───┤
+     └───────────────┘   │  ┌─────────────────────┐
+                         └──► qwc-map-viewer-base │
+                            └─────────────────────┘
 
 ### Run docker image
 
