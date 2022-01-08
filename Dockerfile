@@ -1,4 +1,4 @@
-FROM sourcepole/qwc-uwsgi-base:alpine-v2021.12.16
+FROM sourcepole/qwc-uwsgi-base:alpine-v2022.01.08
 
 # Required for pip with git repos
 RUN apk add --no-cache --update git

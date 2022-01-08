@@ -3,9 +3,8 @@ import os
 import requests
 
 from flask import json, Flask, request, jsonify, redirect
-from flask_jwt_extended import jwt_optional, get_jwt_identity
 
-from qwc_services_core.jwt import jwt_manager
+from qwc_services_core.auth import auth_manager, optional_auth, get_identity
 from qwc_services_core.tenant_handler import TenantHandler, TenantPrefixMiddleware, TenantSessionInterface
 from qwc2_viewer import QWC2Viewer
 
@@ -18,7 +17,7 @@ app = Flask(__name__)
 app.config['ERROR_404_HELP'] = False
 
 # Setup the Flask-JWT-Extended extension
-jwt = jwt_manager(app)
+jwt = auth_manager(app)
 
 # create tenant handler
 tenant_handler = TenantHandler(app.logger)
@@ -51,10 +50,10 @@ def auth_path_prefix():
     return app.session_interface.tenant_path_prefix().rstrip("/") + "/" + AUTH_PATH.lstrip("/")
 
 @app.before_request
-@jwt_optional
+@optional_auth
 def assert_user_is_logged():
     if AUTH_REQUIRED:
-        identity = get_jwt_identity()
+        identity = get_identity()
         if identity is None:
             app.logger.info("Access denied, authentication required")
             prefix = auth_path_prefix()
@@ -64,21 +63,21 @@ def assert_user_is_logged():
 @app.route('/')
 def index():
     qwc2_viewer = qwc2_viewer_handler()
-    return qwc2_viewer.qwc2_index(get_jwt_identity())
+    return qwc2_viewer.qwc2_index(get_identity())
 
 
 @app.route('/config.json')
-@jwt_optional
+@optional_auth
 def qwc2_config():
     qwc2_viewer = qwc2_viewer_handler()
-    return with_no_cache_headers(qwc2_viewer.qwc2_config(get_jwt_identity(), request.args))
+    return with_no_cache_headers(qwc2_viewer.qwc2_config(get_identity(), request.args))
 
 
 @app.route('/themes.json')
-@jwt_optional
+@optional_auth
 def qwc2_themes():
     qwc2_viewer = qwc2_viewer_handler()
-    return with_no_cache_headers(qwc2_viewer.qwc2_themes(get_jwt_identity()))
+    return with_no_cache_headers(qwc2_viewer.qwc2_themes(get_identity()))
 
 
 @app.route('/assets/<path:path>')
