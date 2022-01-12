@@ -3,6 +3,7 @@ import os
 import tempfile
 
 from flask import abort, json, jsonify, send_from_directory
+from flask_jwt_extended import get_jwt
 
 from qwc_services_core.permissions_reader import PermissionsReader
 from qwc_services_core.runtime_config import RuntimeConfig
@@ -95,16 +96,22 @@ class QWC2Viewer:
         """
         # check if index file is present
         viewer_index_file = os.path.join(self.config_dir, 'index.html')
-        if not os.path.isfile(viewer_index_file):
+        try:
+            with open(viewer_index_file) as fh:
+                viewer_index = fh.read()
+        except:
             # show FileNotFoundError error
             raise Exception(
                 "[Errno 2] No such file or directory: '%s'" %
                 viewer_index_file
             )
-
-        # send index.html from config dir
         self.logger.debug("Using index '%s'" % viewer_index_file)
-        return send_from_directory(self.config_dir, 'index.html')
+
+        # Inject CSRF token
+        token = (get_jwt() or {}).get("csrf")
+        viewer_index = viewer_index.replace('</head>', '<meta name="csrf-token" content="%s" />\n</head>' % token)
+
+        return viewer_index
 
     def qwc2_config(self, identity, params):
         """Return QWC2 config.json for user.
