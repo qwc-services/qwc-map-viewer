@@ -109,7 +109,8 @@ class QWC2Viewer:
 
         # Inject CSRF token
         token = (get_jwt() or {}).get("csrf")
-        viewer_index = viewer_index.replace('</head>', '<meta name="csrf-token" content="%s" />\n</head>' % token)
+        if token:
+            viewer_index = viewer_index.replace('</head>', '<meta name="csrf-token" content="%s" />\n</head>' % token)
 
         return viewer_index
 
