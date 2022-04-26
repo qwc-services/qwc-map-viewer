@@ -993,12 +993,15 @@ class QWC2Viewer:
             plugin_data = {}
             for plugin, resources in item['pluginData'].items():
                 if plugin in plugin_permissions:
-                    # filter plugin specific resources
-                    resources = [
-                        resource for resource in resources
-                        if resource in plugin_permissions[plugin]
-                    ]
-                    if resources:
+                    if isinstance(resources, list):
+                        # filter plugin specific resources
+                        permitted_resources = [
+                            resource for resource in resources
+                            if resource in plugin_permissions[plugin]
+                        ]
+                        if permitted_resources:
+                            plugin_data[plugin] = permitted_resources
+                    else:
                         plugin_data[plugin] = resources
 
             if plugin_data:
