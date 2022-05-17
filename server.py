@@ -82,9 +82,11 @@ def qwc2_themes():
 
 
 @app.route('/assets/<path:path>')
+# lang: Optional, asset language, i.e. en-US
 def qwc2_assets(path):
     qwc2_viewer = qwc2_viewer_handler()
-    return qwc2_viewer.qwc2_assets(path)
+    lang = request.args.get('lang', None)
+    return qwc2_viewer.qwc2_assets(path, lang)
 
 
 @app.route('/dist/<path:path>')

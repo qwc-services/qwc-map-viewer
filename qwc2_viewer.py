@@ -1,8 +1,9 @@
 import base64
 import os
 import tempfile
+from xml.etree import ElementTree
 
-from flask import abort, json, jsonify, send_from_directory
+from flask import abort, json, jsonify, send_from_directory, Response
 from flask_jwt_extended import get_jwt
 
 from qwc_services_core.permissions_reader import PermissionsReader
@@ -307,12 +308,29 @@ class QWC2Viewer:
         for subdir in themes.get('subdirs', []):
             self.__update_service_urls(subdir)
 
-    def qwc2_assets(self, path):
+    def qwc2_assets(self, path, lang):
         """Return QWC2 asset from assets/ or temporary image dir.
 
         :param str path: Asset path
+        :param str lang: Asset language
         """
         if not path.startswith(self.BASE64_IMAGE_ROUTE_PREFIX):
+            # Special case for ui files: return translated UI
+            if path.lower().endswith('.ui'):
+                return self.translate_designer_form(path, lang)
+
+            # Check if localized asset exists
+            if lang:
+                full_dir = os.path.dirname(os.path.join(self.qwc2_path, 'assets', path))
+                basename, ext = os.path.splitext(os.path.basename(path))
+                localized_file = os.path.join(basename + "_{lang}" + ext)
+                if os.path.isfile(os.path.join(full_dir, localized_file.format(lang=lang))):
+                    # Full locale (i.e. en-US)
+                    path = os.path.join(os.path.dirname(path), localized_file.format(lang=lang))
+                elif os.path.isfile(os.path.join(full_dir, localized_file.format(lang=lang[0:2]))):
+                    # Lang only (i.e. en)
+                    path = os.path.join(os.path.dirname(path), localized_file.format(lang=lang[0:2]))
+
             # send file from assets/
             return send_from_directory(
                 os.path.join(self.qwc2_path, 'assets'), path
@@ -459,6 +477,66 @@ class QWC2Viewer:
             )
 
         return image_path
+
+    def translate_designer_form(self, path, lang):
+        """Return translated qt designed form, if possible.
+
+        :param str path: Designed form path
+        :param str lang: Desired language
+        """
+        # Attempt to read form
+        full_path = os.path.join(self.qwc2_path, 'assets', path)
+        try:
+            with open(full_path, 'r') as fh:
+                form = fh.read()
+        except:
+            return abort(404)
+
+        if not lang:
+            return Response(form, mimetype='text/xml')
+
+        # Look for translation file
+        basename = os.path.splitext(os.path.basename(path))[0]
+        translation_path = os.path.join(os.path.dirname(full_path), basename + "_{lang}.ts")
+        if os.path.isfile(translation_path.format(lang=lang)):
+            # Full locale (i.e. en-US)
+            translation_path = translation_path.format(lang=lang)
+        elif os.path.isfile(translation_path.format(lang=lang[0:2])):
+            # Lang only (i.e. en)
+            translation_path = translation_path.format(lang=lang[0:2])
+        else:
+            return Response(form, mimetype='text/xml')
+
+        # Attempt to load translation file
+        try:
+            with open(translation_path, 'r') as fh:
+                translation = fh.read()
+        except:
+            return Response(form, mimetype='text/xml')
+
+        try:
+            form_document = ElementTree.fromstring(form)
+            ts_document = ElementTree.fromstring(translation)
+        except:
+            return Response(form, mimetype='text/xml')
+
+        # Build translation string lookup
+        translations = {}
+        for message in ts_document.findall(".//message"):
+            source = message.find('./source')
+            translation = message.find('./translation')
+            if source is not None and translation is not None and translation.get('type', '') != "unfinished":
+                translations[source.text] = translation.text
+
+        for string in form_document.findall(".//string"):
+            if string.get("notr", "") == "true":
+                continue
+
+            if string.text in translations:
+                string.text = translations[string.text]
+
+        form =  ElementTree.tostring(form_document, encoding='utf8', method='xml')
+        return Response(form, mimetype='text/xml')
 
     def viewer_task_permissions(self, identity):
         """Return permissions for viewer tasks.
