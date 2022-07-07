@@ -689,6 +689,7 @@ class QWC2Viewer:
         self.filter_item_external_layers(item, permitted_layers)
         self.filter_item_theme_info_links(item, identity)
         self.filter_item_plugin_data(item, identity)
+        self.filter_item_snapping_config(item, identity, permitted_layers)
 
         return item
 
@@ -1084,3 +1085,15 @@ class QWC2Viewer:
             else:
                 # remove if no plugin data permitted
                 del item['pluginData']
+
+    def filter_item_snapping_config(self, item, identity, permitted_layers):
+        """Filter theme item snapping config by permissions.
+
+        :param obj item: Theme item
+        :param obj identity: User identity
+        :param set permitted_layers: List of permitted layers
+        """
+        if 'snapping' in item:
+            item['snapping']['snaplayers'] = list(
+                filter(lambda entry: entry['name'] in permitted_layers, item['snapping']['snaplayers'])
+            )
