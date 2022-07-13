@@ -78,6 +78,8 @@ class QWC2Viewer:
         self.show_restricted_themes = config.get('show_restricted_themes', False)
         self.show_restricted_themes_whitelist = config.get('show_restricted_themes_whitelist', "")
 
+        self.user_info_fields = config.get('user_info_fields', [])
+
         # get config dir for tenant
         self.config_dir = os.path.dirname(
             RuntimeConfig.config_file_path('mapViewer', tenant)
@@ -160,11 +162,21 @@ class QWC2Viewer:
 
         username = None
         autologin = None
+        user_infos = {}
         if identity:
             if isinstance(identity, dict):
                 username = identity.get('username')
                 # NOTE: ignore group from identity
                 autologin = identity.get('autologin')
+                # add any custom user info fields
+                for field in self.user_info_fields:
+                    if field in identity:
+                        user_infos[field] = identity.get(field)
+                    else:
+                        self.logger.warning(
+                            "Could not read user info field '%s' "
+                            "from identity" % field
+                        )
             else:
                 # identity is username
                 username = identity
@@ -186,7 +198,10 @@ class QWC2Viewer:
         self.__filter_restricted_viewer_tasks(
             config['plugins']['desktop'], viewer_task_permissions
         )
+
         config['username'] = username
+        if user_infos:
+            config['user_infos'] = user_infos
 
         return jsonify(config)
 

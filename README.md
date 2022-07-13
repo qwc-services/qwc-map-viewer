@@ -101,6 +101,14 @@ Main optional QWC services:
  * `search_service_url`: QWC Search Service URL
  * `search_data_service_url`: QWC Search Result Service URL
 
+Additional user info fields may be read from the JWT identity by setting `user_info_fields`:
+```json
+"config": {
+  "user_info_fields": ["surname", "first_name"]
+}
+```
+These will be added as `user_infos` in the `config.json` response if present in the current identity.
+
 `qwc2_config` contains the QWC2 application configuration, with `config` corresponding to the contents of your standalone `config.json` file (see [Documentation](https://github.com/qgis/qwc2-demo-app/blob/master/doc/QWC2_Documentation.md#application-configuration-the-configjson-and-jsappconfigjs-files)).
 
 `qwc2_themes` contains the full themes configuration, corresponding to the contents of your standalone `themes.json` collected from `themesConfig.json`.

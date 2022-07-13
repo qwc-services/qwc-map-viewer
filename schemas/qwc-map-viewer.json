@@ -102,6 +102,13 @@
           "items": {
             "type": "string"
           }
+        },
+        "user_info_fields": {
+          "description": "List of user info fields to read from JWT identity",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
         }
       },
       "required": [
