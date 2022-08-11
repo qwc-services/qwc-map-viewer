@@ -2,12 +2,17 @@ import base64
 import os
 import tempfile
 from xml.etree import ElementTree
+from sqlalchemy.sql import text as sql_text
 
 from flask import abort, json, jsonify, send_from_directory, Response
 from flask_jwt_extended import get_jwt
 
+from qwc_services_core.database import DatabaseEngine
 from qwc_services_core.permissions_reader import PermissionsReader
 from qwc_services_core.runtime_config import RuntimeConfig
+
+
+db_engine = DatabaseEngine()
 
 
 class QWC2Viewer:
@@ -74,6 +79,8 @@ class QWC2Viewer:
             config.get('legend_service_url', self.ogc_service_url))
         self.print_service_url = self.__sanitize_url(
             config.get('print_service_url', self.ogc_service_url))
+
+        self.db_url = config.get('db_url', 'postgresql:///?service=qwc_configdb')
 
         self.show_restricted_themes = config.get('show_restricted_themes', False)
         self.show_restricted_themes_whitelist = config.get('show_restricted_themes_whitelist', "")
@@ -169,14 +176,28 @@ class QWC2Viewer:
                 # NOTE: ignore group from identity
                 autologin = identity.get('autologin')
                 # add any custom user info fields
-                for field in self.user_info_fields:
-                    if field in identity:
-                        user_infos[field] = identity.get(field)
-                    else:
-                        self.logger.warning(
-                            "Could not read user info field '%s' "
-                            "from identity" % field
-                        )
+                if self.user_info_fields:
+                    db = db_engine.db_engine(self.db_url)
+                    conn = db.connect()
+
+                    sql = sql_text("""
+                        SELECT *
+                        FROM "qwc_config"."user_infos"
+                        WHERE user_id = :user_id
+                    """)
+                    result = conn.execute(sql, user_id=identity.get("user_id"))
+
+                    row = result.first()
+                    entries = row._asdict() if row else {}
+                    for field in self.user_info_fields:
+                        if field in entries:
+                            user_infos[field] = entries[field]
+                        else:
+                            self.logger.warning(
+                                "Could not read user info field '%s' "
+                                "from identity" % field
+                            )
+                    conn.close()
             else:
                 # identity is username
                 username = identity
