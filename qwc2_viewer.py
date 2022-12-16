@@ -204,12 +204,12 @@ class QWC2Viewer:
 
         # Look for any Login item, and change it to logout if user is signed in
         signed_in = username is not None
-        autologin = (autologin is not None) or (
+        hide_login = (autologin is not None) or (
             params.get("autologin") is not None)
         self.__replace_login__helper_plugins(
-            config['plugins']['mobile'], signed_in, autologin)
+            config['plugins']['mobile'], signed_in, hide_login)
         self.__replace_login__helper_plugins(
-            config['plugins']['desktop'], signed_in, autologin)
+            config['plugins']['desktop'], signed_in, hide_login)
 
         # filter any restricted viewer task items
         viewer_task_permissions = self.viewer_task_permissions(identity)
@@ -231,7 +231,7 @@ class QWC2Viewer:
         """
         return (url.rstrip('/') + '/') if url else ""
 
-    def __replace_login__helper_plugins(self, plugins, signed_in, autologin):
+    def __replace_login__helper_plugins(self, plugins, signed_in, hide):
         """Search plugins configurations and call
            self.__replace_login__helper_items on menuItems and toolbarItems
 
@@ -244,12 +244,12 @@ class QWC2Viewer:
                 continue
             if "menuItems" in plugin["cfg"]:
                 self.__replace_login__helper_items(
-                    plugin["cfg"]["menuItems"], signed_in, autologin)
+                    plugin["cfg"]["menuItems"], signed_in, hide)
             if "toolbarItems" in plugin["cfg"]:
                 self.__replace_login__helper_items(
-                    plugin["cfg"]["toolbarItems"], signed_in, autologin)
+                    plugin["cfg"]["toolbarItems"], signed_in, hide)
 
-    def __replace_login__helper_items(self, items, signed_in, autologin):
+    def __replace_login__helper_items(self, items, signed_in, hide):
         """Replace Login with Logout if identity is not None on Login items in
            menuItems and toolbarItems.
 
@@ -259,14 +259,15 @@ class QWC2Viewer:
         removeIndex = None
         for (idx, item) in enumerate(items):
             if item["key"] == "Login" and signed_in:
-                if autologin:
+                if hide:
                     removeIndex = idx
                     break
                 else:
                     item["key"] = "Logout"
                     item["icon"] = "logout"
             elif "subitems" in item:
-                self.__replace_login__helper_items(item["subitems"], signed_in, autologin)
+                self.__replace_login__helper_items(
+                    item["subitems"], signed_in, hide)
         if removeIndex is not None:
             del items[removeIndex]
 
