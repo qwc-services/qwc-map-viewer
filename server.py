@@ -73,7 +73,7 @@ def assert_user_is_logged():
 @optional_auth
 def index():
     qwc2_viewer = qwc2_viewer_handler()
-    return qwc2_viewer.qwc2_index(get_identity())
+    return qwc2_viewer.qwc2_index(get_identity(), request.args, request.url)
 
 
 @app.route('/config.json')

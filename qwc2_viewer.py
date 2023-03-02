@@ -1,10 +1,11 @@
 import base64
 import os
 import tempfile
+from urllib.parse import urlencode, urljoin
 from xml.etree import ElementTree
 from sqlalchemy.sql import text as sql_text
 
-from flask import abort, json, jsonify, send_from_directory, Response
+from flask import abort, json, jsonify, redirect, send_from_directory, Response
 from flask_jwt_extended import get_jwt
 
 from qwc_services_core.database import DatabaseEngine
@@ -84,6 +85,9 @@ class QWC2Viewer:
 
         self.show_restricted_themes = config.get('show_restricted_themes', False)
         self.show_restricted_themes_whitelist = config.get('show_restricted_themes_whitelist', "")
+        self.redirect_restricted_themes_to_auth = config.get(
+            'redirect_restricted_themes_to_auth', False
+        )
 
         self.user_info_fields = config.get('user_info_fields', [])
 
@@ -99,11 +103,30 @@ class QWC2Viewer:
         self.resources = self.load_resources(config)
         self.permissions_handler = PermissionsReader(tenant, logger)
 
-    def qwc2_index(self, identity):
+    def qwc2_index(self, identity, params, request_url):
         """Return QWC2 index.html for user.
 
         :param obj identity: User identity
+        :param ImmutableMultiDict params: Request URL parameters
+        :param str request_url: Full request URL
         """
+        # check whether requested theme is restricted
+        theme = params.get('t')
+        if self.__theme_restricted(identity, theme):
+            if self.auth_service_url:
+                # redirect to login on auth service
+                login_params = urlencode({
+                    'url': request_url
+                })
+                redirect_url = urljoin(
+                    self.auth_service_url, "login?%s" % login_params
+                )
+                self.logger.debug(
+                    "Restricted theme '%s' requested, "
+                    "redirecting to auth service" % theme
+                )
+                return redirect(redirect_url)
+
         # check if index file is present
         viewer_index_file = os.path.join(self.config_dir, 'index.html')
         try:
@@ -230,6 +253,52 @@ class QWC2Viewer:
         """Ensure URL ends with a slash, if not empty
         """
         return (url.rstrip('/') + '/') if url else ""
+
+    def __theme_restricted(self, identity, theme):
+        """Check whether requested theme is restricted.
+
+        :param obj identity: User identity
+        :param str theme: Theme ID
+        """
+        if not self.redirect_restricted_themes_to_auth:
+            # redirect is not enabled
+            return False
+        if not theme:
+            # no theme requested or blank
+            return False
+        if not self.auth_service_url:
+            # no auth service present
+            return False
+        if identity:
+            # skip if already signed in
+            return False
+
+        # check whether theme exists
+        available_theme_ids = self.__collect_theme_ids(self.resources['qwc2_themes'])
+        if theme not in available_theme_ids:
+            # unknown theme ID
+            return False
+
+        # check whether theme is not public
+        public_theme_ids = self.__collect_theme_ids(self.permitted_themes(None))
+        return theme not in public_theme_ids
+
+    def __collect_theme_ids(self, theme_group):
+        """Recursively collect theme IDs from config or permissions.
+
+        :param obj theme_group: Theme group from config or permissions
+        """
+        theme_ids = []
+
+        # collect theme items
+        for item in theme_group.get('items', []):
+            theme_ids.append(item['id'])
+
+        # collect sub groups
+        for subgroup in theme_group.get('subdirs', []):
+            theme_ids += self.__collect_theme_ids(subgroup)
+
+        return theme_ids
 
     def __replace_login__helper_plugins(self, plugins, signed_in, hide):
         """Search plugins configurations and call

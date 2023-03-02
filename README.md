@@ -116,6 +116,18 @@ These will be added as `user_infos` in the `config.json` response if present in 
 Add new themes to your `themesConfig.json` (see [Documentation](https://github.com/qgis/qwc2-demo-app/blob/master/doc/QWC2_Documentation.md#theme-configuration-qgis-projects-and-the-themesconfigjson-file)) and put any theme thumbnails into `$QWC2_PATH/assets/img/mapthumbs/`.
 The `themesConfig.json` file is used to collect the full themes configuration using GetProjectSettings.
 
+Optional settings for restricted themes:
+```json
+"config": {
+  "show_restricted_themes": false,
+  "show_restricted_themes_whitelist": [],
+  "redirect_restricted_themes_to_auth": false
+}
+```
+* `show_restricted_themes` (optional): Whether to insert placeholder items for restricted themes in themes.json (default: `false`)
+* `show_restricted_themes_whitelist` (optional): Whitelist of restricted theme names to include in themes.json. If empty, all restricted themes are shown. (default: `[]`)
+* `redirect_restricted_themes_to_auth` (optional): Whether to redirect to login on auth service if requesting a restricted theme in URL params, if not currently signed in (default: `false`)
+
 
 ### Permissions
 

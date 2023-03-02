@@ -103,6 +103,10 @@
             "type": "string"
           }
         },
+        "redirect_restricted_themes_to_auth": {
+          "description": "Whether to redirect to login on auth service if requesting a restricted theme in URL params",
+          "type": "boolean"
+        },
         "user_info_fields": {
           "description": "List of user info fields to read from JWT identity",
           "type": "array",
