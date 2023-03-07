@@ -21,7 +21,8 @@ jobs:
           fi
 
       - name: Build and publish base container
-        uses: elgohr/Publish-Docker-Github-Action@2.12
+        uses: elgohr/Publish-Docker-Github-Action@v5
+        if: github.event_name != 'pull_request'
         with:
           name: sourcepole/qwc-map-viewer-base
           username: ${{ secrets.DOCKER_HUB_USER }}
@@ -29,7 +30,8 @@ jobs:
           tags: "${{ steps.get_tag.outputs.tag }}"
 
       - name: Build and publish demo container
-        uses: elgohr/Publish-Docker-Github-Action@2.12
+        uses: elgohr/Publish-Docker-Github-Action@v5
+        if: github.event_name != 'pull_request'
         env:
           QWC2_URL: https://github.com/qgis/qwc2-demo-app/releases/download/${{ steps.get_tag.outputs.app_version }}/qwc2-demo-app.zip
         with:
