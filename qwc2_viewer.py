@@ -230,12 +230,17 @@ class QWC2Viewer:
         hide_login = (autologin is not None) or (
             params.get("autologin") is not None)
         self.__replace_login__helper_plugins(
+            config['plugins']['common'], signed_in, hide_login)
+        self.__replace_login__helper_plugins(
             config['plugins']['mobile'], signed_in, hide_login)
         self.__replace_login__helper_plugins(
             config['plugins']['desktop'], signed_in, hide_login)
 
         # filter any restricted viewer task items
         viewer_task_permissions = self.viewer_task_permissions(identity)
+        self.__filter_restricted_viewer_tasks(
+            config['plugins']['common'], viewer_task_permissions
+        )
         self.__filter_restricted_viewer_tasks(
             config['plugins']['mobile'], viewer_task_permissions
         )
