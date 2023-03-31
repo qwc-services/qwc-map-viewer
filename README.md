@@ -12,7 +12,7 @@ Provide a [QWC2 Web Client](https://github.com/qgis/qwc2-demo-app) application u
 Setup
 -----
 
-Copy your QWC2 files from a production build (see [QWC2 Quick start](https://github.com/qgis/qwc2-demo-app/blob/master/doc/QWC2_Documentation.md#quick-start)):
+Copy your QWC2 files from a production build (see [QWC2 Quick start](https://github.com/qgis/qwc2-demo-app/blob/master/doc/src/quick_start.md)):
 
     SRCDIR=path/to/qwc2-app/prod/ DSTDIR=$PWD
     mkdir $DSTDIR/qwc2 && mkdir $DSTDIR/qwc2/dist
@@ -109,11 +109,11 @@ Additional user info fields may be read from the JWT identity by setting `user_i
 ```
 These will be added as `user_infos` in the `config.json` response if present in the current identity.
 
-`qwc2_config` contains the QWC2 application configuration, with `config` corresponding to the contents of your standalone `config.json` file (see [Documentation](https://github.com/qgis/qwc2-demo-app/blob/master/doc/QWC2_Documentation.md#application-configuration-the-configjson-and-jsappconfigjs-files)).
+`qwc2_config` contains the QWC2 application configuration, with `config` corresponding to the contents of your standalone `config.json` file (see [Documentation](https://github.com/qgis/qwc2-demo-app/blob/master/doc/src/qwc_configuration.md#application-configuration-the-configjson-and-jsappconfigjs-files)).
 
 `qwc2_themes` contains the full themes configuration, corresponding to the contents of your standalone `themes.json` collected from `themesConfig.json`.
 
-Add new themes to your `themesConfig.json` (see [Documentation](https://github.com/qgis/qwc2-demo-app/blob/master/doc/QWC2_Documentation.md#theme-configuration-qgis-projects-and-the-themesconfigjson-file)) and put any theme thumbnails into `$QWC2_PATH/assets/img/mapthumbs/`.
+Add new themes to your `themesConfig.json` (see [Documentation](https://github.com/qgis/qwc2-demo-app/blob/master/doc/src/qwc_configuration.md#theme-configuration-qgis-projects-and-the-themesconfigjson-file)) and put any theme thumbnails into `$QWC2_PATH/assets/img/mapthumbs/`.
 The `themesConfig.json` file is used to collect the full themes configuration using GetProjectSettings.
 
 Optional settings for restricted themes:
