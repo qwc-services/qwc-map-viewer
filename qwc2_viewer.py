@@ -1,5 +1,6 @@
 import base64
 import os
+import requests
 import tempfile
 from urllib.parse import urlencode, urljoin
 from xml.etree import ElementTree
@@ -28,13 +29,15 @@ class QWC2Viewer:
 
     DEFAULT_THUMBNAIL_IMAGE = 'img/mapthumbs/default.jpg'
 
-    def __init__(self, tenant, logger):
+    def __init__(self, tenant, tenant_handler, logger):
         """Constructor
 
         :param str tenant: Tenant ID
+        :param TenantHandler tenant_handler: tenant handler
         :param Logger logger: Application logger
         """
         self.tenant = tenant
+        self.tenant_handler = tenant_handler
         self.logger = logger
 
         config_handler = RuntimeConfig("mapViewer", logger)
@@ -80,6 +83,14 @@ class QWC2Viewer:
             config.get('legend_service_url', self.ogc_service_url))
         self.print_service_url = self.__sanitize_url(
             config.get('print_service_url', self.ogc_service_url))
+        # internal QWC service URLs for internal usage
+        if self.permalink_service_url:
+            # set default if permalink service present
+            default_url = 'http://qwc-permalink-service:9090'
+        else:
+            default_url = None
+        self.internal_permalink_service_url = self.__sanitize_url(
+            config.get('internal_permalink_service_url', default_url))
 
         self.db_url = config.get('db_url', 'postgresql:///?service=qwc_configdb')
 
@@ -111,7 +122,7 @@ class QWC2Viewer:
         :param str request_url: Full request URL
         """
         # check whether requested theme is restricted
-        theme = params.get('t')
+        theme = self.__theme_from_params(identity, params)
         if self.__theme_restricted(identity, theme):
             if self.auth_service_url:
                 # redirect to login on auth service
@@ -260,6 +271,65 @@ class QWC2Viewer:
         """Ensure URL ends with a slash, if not empty
         """
         return (url.rstrip('/') + '/') if url else ""
+
+    def __theme_from_params(self, identity, params):
+        """Get requested theme from URL params.
+
+        NOTE: only resolve permalinks if redirect to login is enabled
+
+        :param obj identity: User identity
+        :param ImmutableMultiDict params: Request URL parameters
+        """
+        theme = params.get('t')
+
+        if 'k' not in params:
+            # no permalink param present
+            return theme
+        if not self.redirect_restricted_themes_to_auth:
+            # redirect is not enabled
+            return theme
+        if (
+            not self.permalink_service_url
+            or not self.internal_permalink_service_url
+        ):
+            # no permalink service present
+            return theme
+        if not self.auth_service_url:
+            # no auth service present
+            return False
+        if identity:
+            # skip if already signed in
+            return theme
+
+        # resolve permalink and extract theme
+        try:
+            # resolve permalink
+            url = urljoin(self.internal_permalink_service_url, 'resolvepermalink')
+            params = {
+                'key': params.get('k')
+            }
+            self.logger.debug(
+                "Resolving permalink at %s?%s" % (url, urlencode(params))
+            )
+            headers = {}
+            if self.tenant_handler.tenant_header:
+                # forward tenant header
+                headers[self.tenant_handler.tenant_header] = self.tenant
+                self.logger.debug("Forwarding tenant header: %s" % headers)
+            response = requests.get(url, params=params, headers=headers)
+
+            # extract theme
+            permalink = json.loads(response.text)
+            permalink_theme = permalink.get('query', {}).get('t')
+            if permalink_theme:
+                self.logger.debug(
+                    "Permalink contains theme '%s'" % permalink_theme
+                )
+                theme = permalink_theme
+        except Exception as e:
+            self.logger.error("Could not resolve permalink:\n%s" % e)
+
+        return theme
 
     def __theme_restricted(self, identity, theme):
         """Check whether requested theme is restricted.

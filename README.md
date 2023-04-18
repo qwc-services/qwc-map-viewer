@@ -121,12 +121,14 @@ Optional settings for restricted themes:
 "config": {
   "show_restricted_themes": false,
   "show_restricted_themes_whitelist": [],
-  "redirect_restricted_themes_to_auth": false
+  "redirect_restricted_themes_to_auth": false,
+  "internal_permalink_service_url": "http://qwc-permalink-service:9090"
 }
 ```
 * `show_restricted_themes` (optional): Whether to insert placeholder items for restricted themes in themes.json (default: `false`)
 * `show_restricted_themes_whitelist` (optional): Whitelist of restricted theme names to include in themes.json. If empty, all restricted themes are shown. (default: `[]`)
 * `redirect_restricted_themes_to_auth` (optional): Whether to redirect to login on auth service if requesting a restricted theme in URL params, if not currently signed in (default: `false`)
+* `internal_permalink_service_url` (optional): Internal Permalink service URL for getting the theme from a resolved permalink for redirecting to login (default: `http://qwc-permalink-service:9090`). This is used only if `redirect_restricted_themes_to_auth` is enabled and `permalink_service_url` is set.
 
 
 ### Permissions

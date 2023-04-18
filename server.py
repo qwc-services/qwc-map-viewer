@@ -34,7 +34,7 @@ def qwc2_viewer_handler():
     handler = tenant_handler.handler('mapViewer', 'qwc', tenant)
     if handler is None:
         handler = tenant_handler.register_handler(
-            'qwc', tenant, QWC2Viewer(tenant, app.logger))
+            'qwc', tenant, QWC2Viewer(tenant, tenant_handler, app.logger))
     return handler
 
 

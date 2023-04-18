@@ -72,6 +72,10 @@
           "description": "QWC Permalink Service URL",
           "type": "string"
         },
+        "internal_permalink_service_url": {
+          "description": "Internal QWC Permalink Service URL",
+          "type": "string"
+        },
         "plotinfo_service_url": {
           "description": "PlotInfo Service URL",
           "type": "string"
