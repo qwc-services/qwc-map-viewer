@@ -822,15 +822,29 @@ class QWC2Viewer:
 
         # combine permissions
         permitted_attributes = set()
+        creatable = False
+        updatable = False
+        deletable = False
         for permission in dataset_permissions:
             # collect permitted attributes
             permitted_attributes.update(permission.get('attributes', []))
+            # determine CRUD permissions
+            creatable |= permission.get('creatable', False)
+            updatable |= permission.get('updatable', False)
+            deletable |= permission.get('deletable', False)
 
         # filter attributes by permissions
         config['fields'] = [
             field for field in config.get('fields', [])
             if field['id'] in permitted_attributes
         ]
+
+        # set CRUD permissions
+        config['permissions'] = {
+            'creatable': creatable,
+            'updatable': updatable,
+            'deletable': deletable
+        }
 
         return config
 
