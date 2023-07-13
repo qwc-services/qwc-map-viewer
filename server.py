@@ -60,6 +60,10 @@ def auth_path_prefix():
 @app.before_request
 @optional_auth
 def assert_user_is_logged():
+    public_endpoints = ['healthz', 'ready']
+    if request.endpoint in public_endpoints:
+        return;
+
     if AUTH_REQUIRED:
         identity = get_identity()
         if identity is None:
