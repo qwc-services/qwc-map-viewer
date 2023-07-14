@@ -117,6 +117,13 @@
           "items": {
             "type": "string"
           }
+        },
+        "public_paths": {
+          "description": "List of paths that will be accessible without a JWT identity",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
         }
       },
       "required": [
