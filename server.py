@@ -6,6 +6,7 @@ from flask import json, Flask, request, jsonify, redirect
 
 from qwc_services_core.auth import auth_manager, optional_auth, get_identity
 from qwc_services_core.tenant_handler import TenantHandler, TenantPrefixMiddleware, TenantSessionInterface
+from qwc_services_core.runtime_config import RuntimeConfig
 from qwc2_viewer import QWC2Viewer
 
 # Autologin config
@@ -60,6 +61,17 @@ def auth_path_prefix():
 @app.before_request
 @optional_auth
 def assert_user_is_logged():
+    public_endpoints = ['healthz', 'ready']
+    if request.endpoint in public_endpoints:
+        return
+
+    tenant = tenant_handler.tenant()
+    config_handler = RuntimeConfig("mapViewer", app.logger)
+    config = config_handler.tenant_config(tenant)
+    public_paths = config.get("public_paths", [])
+    if request.path in public_paths:
+        return
+
     if AUTH_REQUIRED:
         identity = get_identity()
         if identity is None:
