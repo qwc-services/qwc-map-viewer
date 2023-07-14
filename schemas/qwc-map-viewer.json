@@ -117,6 +117,13 @@
           "items": {
             "type": "string"
           }
+        },
+        "public_paths": {
+          "description": "Optional: List of paths that will be accessible without a JWT identity, if AUTH_REQUIRED is set.",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
         }
       },
       "required": [
