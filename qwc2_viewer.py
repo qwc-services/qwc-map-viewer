@@ -822,16 +822,28 @@ class QWC2Viewer:
 
         # combine permissions
         permitted_attributes = set()
+        writable = False
         creatable = False
         updatable = False
         deletable = False
+
         for permission in dataset_permissions:
             # collect permitted attributes
             permitted_attributes.update(permission.get('attributes', []))
-            # determine CRUD permissions
+
+            # allow writable and CRUD actions if any role permits them
+            writable |= permission.get('writable', False)
             creatable |= permission.get('creatable', False)
             updatable |= permission.get('updatable', False)
             deletable |= permission.get('deletable', False)
+
+        # make writable consistent with CRUD actions
+        writable |= creatable and updatable and deletable
+
+        # make CRUD actions consistent with writable
+        creatable |= writable
+        updatable |= writable
+        deletable |= writable
 
         # filter attributes by permissions
         config['fields'] = [
