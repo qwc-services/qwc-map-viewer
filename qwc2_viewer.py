@@ -449,7 +449,7 @@ class QWC2Viewer:
         """
         items_to_remove = []
         for item in items:
-            if item['key'] == key:
+            if item['key'] + item.get('mode', '') == key:
                 # collect items to remove
                 items_to_remove.append(item)
             elif 'subitems' in item:
