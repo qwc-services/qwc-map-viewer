@@ -9,4 +9,5 @@ RUN wget -O /tmp/appbundle.zip --header="PRIVATE-TOKEN: $AUTH_TOKEN" "$QWC2_URL"
     unzip appbundle.zip && \
     cd prod && \
     mkdir /qwc2 && mv * /qwc2 && \
+    mkdir /qwc2/data && \
     rm -rf appbundle.zip

@@ -109,6 +109,10 @@ def qwc2_assets(path):
     lang = request.args.get('lang', None)
     return qwc2_viewer.qwc2_assets(path, lang)
 
+@app.route('/data/<path:path>')
+def qwc2_data(path):
+    qwc2_viewer = qwc2_viewer_handler()
+    return qwc2_viewer.qwc2_data(path)
 
 @app.route('/dist/<path:path>')
 def qwc2_js(path):

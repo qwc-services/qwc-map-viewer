@@ -529,6 +529,13 @@ class QWC2Viewer:
                 # temp dir not present
                 return abort(404)
 
+    def qwc2_data(self, path):
+        """Return data from data/.
+
+        :param str path: Data path
+        """
+        return send_from_directory(os.path.join(self.qwc2_path, 'data'), path)
+
     def qwc2_js(self, path):
         """Return QWC2 Javascript from dist/.
 
