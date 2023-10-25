@@ -232,28 +232,28 @@ class QWC2Viewer:
                 # NOTE: ignore group from identity
                 autologin = identity.get('autologin')
                 # add any custom user info fields
-                if self.user_info_fields:
-                    db = db_engine.db_engine(self.db_url)
-                    conn = db.connect()
+                db = db_engine.db_engine(self.db_url)
+                conn = db.connect()
 
-                    sql = sql_text("""
-                        SELECT *
-                        FROM "qwc_config"."user_infos"
-                        WHERE user_id = :user_id
-                    """)
-                    result = conn.execute(sql, user_id=identity.get("user_id"))
+                sql = sql_text("""
+                    SELECT *
+                    FROM "qwc_config"."user_infos"
+                    WHERE user_id = :user_id
+                """)
+                result = conn.execute(sql, user_id=identity.get("user_id"))
 
-                    row = result.first()
-                    entries = row._asdict() if row else {}
-                    for field in self.user_info_fields:
-                        if field in entries:
-                            user_infos[field] = entries[field]
-                        else:
-                            self.logger.warning(
-                                "Could not read user info field '%s' "
-                                "from identity" % field
-                            )
-                    conn.close()
+                row = result.first()
+                entries = row._asdict() if row else {}
+                for field in self.user_info_fields:
+                    if field in entries:
+                        user_infos[field] = entries[field]
+                    else:
+                        self.logger.warning(
+                            "Could not read user info field '%s' "
+                            "from identity" % field
+                        )
+                user_infos["default_url_params"] = entries.get("default_url_params", "")
+                conn.close()
             else:
                 # identity is username
                 username = identity
