@@ -289,6 +289,67 @@ class QWC2Viewer:
 
         return jsonify(config)
 
+
+    def set_user_info(self, params, identity):
+        """Stores the user info fields passed as query params in the user_infos table.
+        """
+
+        if not params:
+            return jsonify({
+                "success": False,
+                "error": "Empty query"
+            })
+
+        if not isinstance(identity, dict):
+            return jsonify({
+                "success": False,
+                "error": "Missing identity"
+            })
+
+        # Disallow any parameters not set in self.user_info_fields and not "default_url_params"
+        allowed_params = self.user_info_fields + ["default_url_params"]
+        disallowed_params = [key for key in params if key not in allowed_params]
+
+        if disallowed_params:
+            return jsonify({
+                "success": False,
+                "error": "Disallowed fields: " + ",".join(disallowed_params)
+            })
+
+        columns = []
+        values_sql = []
+        values = {}
+        for idx, entry in enumerate(params.items()):
+            key, value = entry
+            placeholder = "__val%d" % idx
+            columns.append(key)
+            values_sql.append(":%s" % placeholder)
+            values[placeholder] = value
+
+        values["user_id"] = identity.get("user_id")
+
+        db = db_engine.db_engine(self.db_url)
+        conn = db.connect()
+        sql = sql_text("""
+            UPDATE "qwc_config"."user_infos"
+            SET ({columns}) = ROW({values_sql})
+            WHERE user_id = :user_id
+            RETURNING ({columns})
+        """.format(
+            columns = ",".join(columns),
+            values_sql = ",".join(values_sql)
+        ))
+        result = conn.execute(sql, **values)
+        row = result.one()
+        return_values = row._asdict() if row else None
+        conn.close()
+
+        return jsonify({
+            "success": return_values is not None,
+            "fields": return_values,
+            "error": "Query failed" if not return_values else None
+        })
+
     def __sanitize_url(self, url):
         """Ensure URL ends with a slash, if not empty
         """

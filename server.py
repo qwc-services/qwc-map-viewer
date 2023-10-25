@@ -126,6 +126,11 @@ def qwc2_translations(path):
     return qwc2_viewer.qwc2_translations(path)
 
 
+@app.route('/setuserinfo')
+def set_user_info():
+    qwc2_viewer = qwc2_viewer_handler()
+    return qwc2_viewer.set_user_info(request.args, get_identity())
+
 @app.route('/favicon.ico')
 def favicon():
     qwc2_viewer = qwc2_viewer_handler()
