@@ -2,7 +2,7 @@ import base64
 import os
 import requests
 import tempfile
-from urllib.parse import urlencode, urljoin
+from urllib.parse import urlparse, urlunparse, urlencode, urljoin
 from xml.etree import ElementTree
 from sqlalchemy.sql import text as sql_text
 
@@ -121,6 +121,28 @@ class QWC2Viewer:
         :param ImmutableMultiDict params: Request URL parameters
         :param str request_url: Full request URL
         """
+
+        # if params are empty, check if there are default params
+        # configured in user_info_fields, and redirect if that is the case
+        if not params and isinstance(identity, dict):
+            db = db_engine.db_engine(self.db_url)
+            conn = db.connect()
+
+            sql = sql_text("""
+                SELECT *
+                FROM "qwc_config"."user_infos"
+                WHERE user_id = :user_id
+            """)
+            result = conn.execute(sql, user_id=identity.get("user_id"))
+
+            row = result.first()
+            fields = row._asdict() if row else {}
+            conn.close()
+            if fields.get("default_url_params", ""):
+                urlparts = urlparse(request_url)
+                urlparts = urlparts._replace(query=fields["default_url_params"])
+                return redirect(urlunparse(urlparts))
+
         # check whether requested theme is restricted
         theme = self.__theme_from_params(identity, params)
         if self.__theme_restricted(identity, theme):
