@@ -331,16 +331,17 @@ class QWC2Viewer:
         db = db_engine.db_engine(self.db_url)
         conn = db.connect()
         sql = sql_text("""
-            UPDATE "qwc_config"."user_infos"
-            SET ({columns}) = ROW({values_sql})
-            WHERE user_id = :user_id
+            INSERT INTO "qwc_config"."user_infos" ("user_id", {columns})
+            VALUES (:user_id, {values_sql})
+            ON CONFLICT ("user_id") DO
+            UPDATE SET ({columns}) = ROW({values_sql})
             RETURNING ({columns})
         """.format(
             columns = ",".join(columns),
             values_sql = ",".join(values_sql)
         ))
         result = conn.execute(sql, **values)
-        row = result.one()
+        row = result.one_or_none()
         return_values = row._asdict() if row else None
         conn.close()
 
