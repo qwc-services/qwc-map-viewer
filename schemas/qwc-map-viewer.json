@@ -118,6 +118,10 @@
             "type": "string"
           }
         },
+        "display_user_info_field": {
+          "description": "User info field to display instead of username",
+          "type": "string"
+        },
         "public_paths": {
           "description": "Optional: List of paths that will be accessible without a JWT identity, if AUTH_REQUIRED is set.",
           "type": "array",

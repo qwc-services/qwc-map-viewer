@@ -101,6 +101,7 @@ class QWC2Viewer:
         )
 
         self.user_info_fields = config.get('user_info_fields', [])
+        self.display_user_info_field = config.get('display_user_info_field')
 
         # get config dir for tenant
         self.config_dir = os.path.dirname(
@@ -224,6 +225,7 @@ class QWC2Viewer:
             'WMS_DPI', config.get('wmsDpi', '96'))
 
         username = None
+        display_username = None
         autologin = None
         user_infos = {}
         if identity:
@@ -244,6 +246,10 @@ class QWC2Viewer:
 
                 row = result.first()
                 entries = row._asdict() if row else {}
+
+                if self.display_user_info_field:
+                    display_username = entries[self.display_user_info_field]
+
                 for field in self.user_info_fields:
                     if field in entries:
                         user_infos[field] = entries[field]
@@ -283,7 +289,7 @@ class QWC2Viewer:
             config['plugins']['desktop'], viewer_task_permissions
         )
 
-        config['username'] = username
+        config['username'] = display_username or username
         if user_infos:
             config['user_infos'] = user_infos
 
