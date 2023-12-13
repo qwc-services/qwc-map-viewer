@@ -125,7 +125,7 @@ class QWC2Viewer:
 
         # if params are empty, check if there are default params
         # configured in user_info_fields, and redirect if that is the case
-        if not params and isinstance(identity, dict):
+        if not params and isinstance(identity, dict) and self.db_url:
             db = db_engine.db_engine(self.db_url)
             conn = db.connect()
 
@@ -234,7 +234,7 @@ class QWC2Viewer:
                 # NOTE: ignore group from identity
                 autologin = identity.get('autologin')
 
-                if self.user_info_fields or self.display_user_info_field:
+                if self.db_url:
                     # add custom user info fields
                     db = db_engine.db_engine(self.db_url)
                     conn = db.connect()
@@ -312,6 +312,12 @@ class QWC2Viewer:
             return jsonify({
                 "success": False,
                 "error": "Missing identity"
+            })
+
+        if not self.db_url:
+            return jsonify({
+                "success": False,
+                "error": "Server configuration does not support setting user info"
             })
 
         # Disallow any parameters not set in self.user_info_fields and not "default_url_params"
