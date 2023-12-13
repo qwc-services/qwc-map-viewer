@@ -233,33 +233,35 @@ class QWC2Viewer:
                 username = identity.get('username')
                 # NOTE: ignore group from identity
                 autologin = identity.get('autologin')
-                # add any custom user info fields
-                db = db_engine.db_engine(self.db_url)
-                conn = db.connect()
 
-                sql = sql_text("""
-                    SELECT *
-                    FROM "qwc_config"."user_infos"
-                    WHERE user_id = :user_id
-                """)
-                result = conn.execute(sql, user_id=identity.get("user_id"))
+                if self.user_info_fields or self.display_user_info_field:
+                    # add custom user info fields
+                    db = db_engine.db_engine(self.db_url)
+                    conn = db.connect()
 
-                row = result.first()
-                entries = row._asdict() if row else {}
+                    sql = sql_text("""
+                        SELECT *
+                        FROM "qwc_config"."user_infos"
+                        WHERE user_id = :user_id
+                    """)
+                    result = conn.execute(sql, user_id=identity.get("user_id"))
 
-                if self.display_user_info_field:
-                    display_username = entries[self.display_user_info_field]
+                    row = result.first()
+                    entries = row._asdict() if row else {}
 
-                for field in self.user_info_fields:
-                    if field in entries:
-                        user_infos[field] = entries[field]
-                    else:
-                        self.logger.warning(
-                            "Could not read user info field '%s' "
-                            "from identity" % field
-                        )
-                user_infos["default_url_params"] = entries.get("default_url_params", "")
-                conn.close()
+                    if self.display_user_info_field:
+                        display_username = entries[self.display_user_info_field]
+
+                    for field in self.user_info_fields:
+                        if field in entries:
+                            user_infos[field] = entries[field]
+                        else:
+                            self.logger.warning(
+                                "Could not read user info field '%s' "
+                                "from identity" % field
+                            )
+                    user_infos["default_url_params"] = entries.get("default_url_params", "")
+                    conn.close()
             else:
                 # identity is username
                 username = identity
