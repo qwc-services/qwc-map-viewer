@@ -134,7 +134,7 @@ class QWC2Viewer:
                 FROM "qwc_config"."user_infos"
                 WHERE user_id = :user_id
             """)
-            result = conn.execute(sql, user_id=identity.get("user_id"))
+            result = conn.execute(sql, {"user_id": identity.get("user_id")})
 
             row = result.first()
             fields = row._asdict() if row else {}
@@ -244,7 +244,7 @@ class QWC2Viewer:
                         FROM "qwc_config"."user_infos"
                         WHERE user_id = :user_id
                     """)
-                    result = conn.execute(sql, user_id=identity.get("user_id"))
+                    result = conn.execute(sql, {"user_id": identity.get("user_id")})
 
                     row = result.first()
                     entries = row._asdict() if row else {}
@@ -348,9 +348,10 @@ class QWC2Viewer:
             columns = ",".join(columns),
             values_sql = ",".join(values_sql)
         ))
-        result = conn.execute(sql, **values)
+        result = conn.execute(sql, values)
         row = result.one_or_none()
         return_values = row._asdict() if row else None
+        conn.commit()
         conn.close()
 
         return jsonify({
