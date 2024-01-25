@@ -131,10 +131,11 @@ class QWC2Viewer:
 
             sql = sql_text("""
                 SELECT *
-                FROM "qwc_config"."user_infos"
-                WHERE user_id = :user_id
+                FROM qwc_config.user_infos ui
+                JOIN qwc_config.users u ON u.id=ui.user_id
+                WHERE u.name=:user;
             """)
-            result = conn.execute(sql, {"user_id": identity.get("user_id")})
+            result = conn.execute(sql, {"user": identity.get("username")})
 
             row = result.first()
             fields = row._asdict() if row else {}
@@ -241,10 +242,11 @@ class QWC2Viewer:
 
                     sql = sql_text("""
                         SELECT *
-                        FROM "qwc_config"."user_infos"
-                        WHERE user_id = :user_id
+                        FROM qwc_config.user_infos ui
+                        JOIN qwc_config.users u ON u.id=ui.user_id
+                        WHERE u.name=:user;
                     """)
-                    result = conn.execute(sql, {"user_id": identity.get("user_id")})
+                    result = conn.execute(sql, {"user": identity.get("username")})
 
                     row = result.first()
                     entries = row._asdict() if row else {}
@@ -340,13 +342,16 @@ class QWC2Viewer:
             values_sql.append(":%s" % placeholder)
             values[placeholder] = value
 
-        values["user_id"] = identity.get("user_id")
+        values["username"] = identity.get("username")
 
         db = db_engine.db_engine(self.db_url)
         conn = db.connect()
         sql = sql_text("""
+            WITH "user" AS (
+                SELECT id FROM "qwc_config"."users" WHERE name=:username
+            )
             INSERT INTO "qwc_config"."user_infos" ("user_id", {columns})
-            VALUES (:user_id, {values_sql})
+            SELECT id, {values_sql} FROM "user"
             ON CONFLICT ("user_id") DO
             UPDATE SET ({columns}) = ROW({values_sql})
             RETURNING ({columns})
