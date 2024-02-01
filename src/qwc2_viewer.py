@@ -536,7 +536,10 @@ class QWC2Viewer:
                     if 'cfg' not in plugin:
                         # skip plugin without cfg
                         continue
-                    if plugin.get("name") == "TaskButton" and \
+
+                    if plugin.get("name") == key:
+                        plugins_to_remove.append(plugin)
+                    elif plugin.get("name") == "TaskButton" and \
                         plugin["cfg"]["task"] + plugin["cfg"].get('mode', '') == key:
                         plugins_to_remove.append(plugin)
 
