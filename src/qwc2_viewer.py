@@ -531,10 +531,14 @@ class QWC2Viewer:
         """
         for key in viewer_task_permissions:
             if not viewer_task_permissions[key]:
+                plugins_to_remove = []
                 for plugin in plugins:
                     if 'cfg' not in plugin:
                         # skip plugin without cfg
                         continue
+                    if plugin.get("name") == "TaskButton" and \
+                        plugin["cfg"]["task"] + plugin["cfg"].get('mode', '') == key:
+                        plugins_to_remove.append(plugin)
 
                     if 'menuItems' in plugin['cfg']:
                         self.__filter_config_items(
@@ -544,6 +548,8 @@ class QWC2Viewer:
                         self.__filter_config_items(
                             plugin['cfg']['toolbarItems'], key
                         )
+                for plugin in plugins_to_remove:
+                    plugins.remove(plugin)
 
     def __filter_config_items(self, items, key):
         """Remove items with key from menuItems and toolbarItems.
