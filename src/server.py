@@ -1,6 +1,7 @@
 import logging
 import os
 import requests
+import urllib.parse
 
 from flask import json, Flask, request, jsonify, redirect
 
@@ -77,7 +78,7 @@ def assert_user_is_logged():
         if identity is None:
             app.logger.info("Access denied, authentication required")
             prefix = auth_path_prefix()
-            return redirect(prefix + '/login?url=%s' % request.url)
+            return redirect(prefix + '/login?url=%s' % urllib.parse.quote(request.url))
 
 
 # routes
