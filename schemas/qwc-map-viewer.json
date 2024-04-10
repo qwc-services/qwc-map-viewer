@@ -20,6 +20,10 @@
       "title": "Config options",
       "type": "object",
       "properties": {
+        "db_url": {
+          "description": "DB connection URL (for user_info_fields). Can be set to an empty string if running without DB.",
+          "type": "string"
+        },
         "qwc2_path": {
           "description": "Path to QWC2 files",
           "type": "string"
