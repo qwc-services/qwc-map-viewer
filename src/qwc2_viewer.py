@@ -2,7 +2,7 @@ import base64
 import os
 import requests
 import tempfile
-from urllib.parse import urlparse, urlunparse, urlencode, urljoin
+from urllib.parse import urlparse, urlunparse, urlencode, urljoin, parse_qsl
 from xml.etree import ElementTree
 from sqlalchemy.sql import text as sql_text
 
@@ -125,7 +125,9 @@ class QWC2Viewer:
 
         # if params are empty, check if there are default params
         # configured in user_info_fields, and redirect if that is the case
-        if not params and isinstance(identity, dict) and self.db_url:
+        if not params.get('t') and not params.get('k') and not params.get('bk') \
+            and isinstance(identity, dict) and self.db_url \
+        :
             db = db_engine.db_engine(self.db_url)
             with db.connect() as conn:
                 sql = sql_text("""
@@ -139,8 +141,10 @@ class QWC2Viewer:
                 row = result.first()
                 fields = row._asdict() if row else {}
             if fields.get("default_url_params", ""):
+                default_params = dict(parse_qsl(fields["default_url_params"]))
+                default_params.update(params)
                 urlparts = urlparse(request_url)
-                urlparts = urlparts._replace(query=fields["default_url_params"])
+                urlparts = urlparts._replace(query=urlencode(default_params))
                 return redirect(urlunparse(urlparts))
 
         # check whether requested theme is restricted
