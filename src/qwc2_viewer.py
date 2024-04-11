@@ -127,19 +127,17 @@ class QWC2Viewer:
         # configured in user_info_fields, and redirect if that is the case
         if not params and isinstance(identity, dict) and self.db_url:
             db = db_engine.db_engine(self.db_url)
-            conn = db.connect()
+            with db.connect() as conn:
+                sql = sql_text("""
+                    SELECT *
+                    FROM qwc_config.user_infos ui
+                    JOIN qwc_config.users u ON u.id=ui.user_id
+                    WHERE u.name=:user;
+                """)
+                result = conn.execute(sql, {"user": identity.get("username")})
 
-            sql = sql_text("""
-                SELECT *
-                FROM qwc_config.user_infos ui
-                JOIN qwc_config.users u ON u.id=ui.user_id
-                WHERE u.name=:user;
-            """)
-            result = conn.execute(sql, {"user": identity.get("username")})
-
-            row = result.first()
-            fields = row._asdict() if row else {}
-            conn.close()
+                row = result.first()
+                fields = row._asdict() if row else {}
             if fields.get("default_url_params", ""):
                 urlparts = urlparse(request_url)
                 urlparts = urlparts._replace(query=fields["default_url_params"])
@@ -238,32 +236,30 @@ class QWC2Viewer:
                 if self.db_url:
                     # add custom user info fields
                     db = db_engine.db_engine(self.db_url)
-                    conn = db.connect()
+                    with db.connect() as conn:
+                        sql = sql_text("""
+                            SELECT *
+                            FROM qwc_config.user_infos ui
+                            JOIN qwc_config.users u ON u.id=ui.user_id
+                            WHERE u.name=:user;
+                        """)
+                        result = conn.execute(sql, {"user": identity.get("username")})
 
-                    sql = sql_text("""
-                        SELECT *
-                        FROM qwc_config.user_infos ui
-                        JOIN qwc_config.users u ON u.id=ui.user_id
-                        WHERE u.name=:user;
-                    """)
-                    result = conn.execute(sql, {"user": identity.get("username")})
+                        row = result.first()
+                        entries = row._asdict() if row else {}
 
-                    row = result.first()
-                    entries = row._asdict() if row else {}
+                        if self.display_user_info_field:
+                            display_username = entries[self.display_user_info_field]
 
-                    if self.display_user_info_field:
-                        display_username = entries[self.display_user_info_field]
-
-                    for field in self.user_info_fields:
-                        if field in entries:
-                            user_infos[field] = entries[field]
-                        else:
-                            self.logger.warning(
-                                "Could not read user info field '%s' "
-                                "from identity" % field
-                            )
-                    user_infos["default_url_params"] = entries.get("default_url_params", "")
-                    conn.close()
+                        for field in self.user_info_fields:
+                            if field in entries:
+                                user_infos[field] = entries[field]
+                            else:
+                                self.logger.warning(
+                                    "Could not read user info field '%s' "
+                                    "from identity" % field
+                                )
+                        user_infos["default_url_params"] = entries.get("default_url_params", "")
             else:
                 # identity is username
                 username = identity
@@ -345,25 +341,23 @@ class QWC2Viewer:
         values["username"] = identity.get("username")
 
         db = db_engine.db_engine(self.db_url)
-        conn = db.connect()
-        sql = sql_text("""
-            WITH "user" AS (
-                SELECT id FROM "qwc_config"."users" WHERE name=:username
-            )
-            INSERT INTO "qwc_config"."user_infos" ("user_id", {columns})
-            SELECT id, {values_sql} FROM "user"
-            ON CONFLICT ("user_id") DO
-            UPDATE SET ({columns}) = ROW({values_sql})
-            RETURNING ({columns})
-        """.format(
-            columns = ",".join(columns),
-            values_sql = ",".join(values_sql)
-        ))
-        result = conn.execute(sql, values)
-        row = result.one_or_none()
-        return_values = row._asdict() if row else None
-        conn.commit()
-        conn.close()
+        with db.begin() as conn:
+            sql = sql_text("""
+                WITH "user" AS (
+                    SELECT id FROM "qwc_config"."users" WHERE name=:username
+                )
+                INSERT INTO "qwc_config"."user_infos" ("user_id", {columns})
+                SELECT id, {values_sql} FROM "user"
+                ON CONFLICT ("user_id") DO
+                UPDATE SET ({columns}) = ROW({values_sql})
+                RETURNING ({columns})
+            """.format(
+                columns = ",".join(columns),
+                values_sql = ",".join(values_sql)
+            ))
+            result = conn.execute(sql, values)
+            row = result.one_or_none()
+            return_values = row._asdict() if row else None
 
         return jsonify({
             "success": return_values is not None,
