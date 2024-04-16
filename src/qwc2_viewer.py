@@ -99,6 +99,9 @@ class QWC2Viewer:
         self.redirect_restricted_themes_to_auth = config.get(
             'redirect_restricted_themes_to_auth', False
         )
+        self.redirect_to_auth_if_no_permitted_themes = config.get(
+            'redirect_to_auth_if_no_permitted_themes', False
+        )
 
         self.user_info_fields = config.get('user_info_fields', [])
         self.display_user_info_field = config.get('display_user_info_field')
@@ -148,21 +151,40 @@ class QWC2Viewer:
                 return redirect(urlunparse(urlparts))
 
         # check whether requested theme is restricted
-        theme = self.__theme_from_params(identity, params)
-        if self.__theme_restricted(identity, theme):
-            if self.auth_service_url:
-                # redirect to login on auth service
-                login_params = urlencode({
-                    'url': request_url
-                })
-                redirect_url = urljoin(
-                    self.auth_service_url, "login?%s" % login_params
-                )
-                self.logger.debug(
-                    "Restricted theme '%s' requested, "
-                    "redirecting to auth service" % theme
-                )
-                return redirect(redirect_url)
+        if self.redirect_restricted_themes_to_auth:
+            theme = self.__theme_from_params(identity, params)
+            if self.__theme_restricted(identity, theme):
+                if self.auth_service_url:
+                    # redirect to login on auth service
+                    login_params = urlencode({
+                        'url': request_url
+                    })
+                    redirect_url = urljoin(
+                        self.auth_service_url, "login?%s" % login_params
+                    )
+                    self.logger.debug(
+                        "Restricted theme '%s' requested, "
+                        "redirecting to auth service" % theme
+                    )
+                    return redirect(redirect_url)
+
+        # If there are no permitted themes, redirect to auth
+        if self.redirect_to_auth_if_no_permitted_themes:
+            permitted_theme_ids = []
+            themes = self.permitted_themes(identity, permitted_theme_ids)
+            if len(permitted_theme_ids) == 0:
+                if self.auth_service_url:
+                    # redirect to login on auth service
+                    login_params = urlencode({
+                        'url': request_url
+                    })
+                    redirect_url = urljoin(
+                        self.auth_service_url, "login?%s" % login_params
+                    )
+                    self.logger.debug(
+                        "No permitted themes, redirecting to auth service"
+                    )
+                    return redirect(redirect_url)
 
         # check if index file is present
         viewer_index_file = os.path.join(self.config_dir, 'index.html')
@@ -862,10 +884,11 @@ class QWC2Viewer:
 
         return viewer_tasks
 
-    def permitted_themes(self, identity):
+    def permitted_themes(self, identity, permitted_theme_ids=[]):
         """Return qwc2_themes filtered by permissions.
 
         :param obj identity: User identity
+        :param list permitted_theme_ids: List of permitted theme ids
         """
         # deep copy qwc2_themes
         themes = json.loads(json.dumps(self.resources['qwc2_themes']))
@@ -875,6 +898,7 @@ class QWC2Viewer:
         for item in themes['items']:
             permitted_item = self.permitted_theme_item(item, identity)
             if permitted_item:
+                permitted_theme_ids.append(permitted_item['id'])
                 items.append(permitted_item)
             else:
                 self.add_restricted_item(items, item)
@@ -884,7 +908,7 @@ class QWC2Viewer:
         # filter theme groups by permissions
         groups = []
         for group in themes['subdirs']:
-            permitted_group = self.permitted_theme_group(group, identity)
+            permitted_group = self.permitted_theme_group(group, identity, permitted_theme_ids)
             if permitted_group:
                 groups.append(permitted_group)
 
@@ -902,17 +926,19 @@ class QWC2Viewer:
 
         return themes
 
-    def permitted_theme_group(self, theme_group, identity):
+    def permitted_theme_group(self, theme_group, identity, permitted_theme_ids):
         """Return theme group filtered by permissions.
 
         :param obj theme_group: Theme group
         :param obj identity: User identity
+        :param list permitted_theme_ids: List of permitted theme ids
         """
         # collect theme items
         items = []
         for item in theme_group['items']:
             permitted_item = self.permitted_theme_item(item, identity)
             if permitted_item:
+                permitted_theme_ids.append(permitted_item['id'])
                 items.append(permitted_item)
             else:
                 self.add_restricted_item(items, item)
@@ -923,7 +949,7 @@ class QWC2Viewer:
         subgroups = []
         for subgroup in theme_group['subdirs']:
             # recursively filter sub group
-            permitted_subgroup = self.permitted_theme_group(subgroup, identity)
+            permitted_subgroup = self.permitted_theme_group(subgroup, identity, permitted_theme_ids)
             if permitted_subgroup:
                 subgroups.append(permitted_subgroup)
 
