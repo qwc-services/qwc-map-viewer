@@ -264,6 +264,9 @@ class QWC2Viewer:
                             )
                     user_infos["default_url_params"] = entries.get("default_url_params", "")
                     conn.close()
+
+                if isinstance(identity.get('user_infos'), dict):
+                    user_infos.update(identity.get('user_infos'))
             else:
                 # identity is username
                 username = identity
