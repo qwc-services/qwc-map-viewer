@@ -14,6 +14,8 @@ from qwc_services_core.permissions_reader import PermissionsReader
 from qwc_services_core.runtime_config import RuntimeConfig
 
 
+qwc_config_schema = os.getenv("QWC_CONFIG_SCHEMA", "qwc_config")
+
 db_engine = DatabaseEngine()
 
 
@@ -135,10 +137,10 @@ class QWC2Viewer:
             with db.connect() as conn:
                 sql = sql_text("""
                     SELECT *
-                    FROM qwc_config.user_infos ui
-                    JOIN qwc_config.users u ON u.id=ui.user_id
+                    FROM {schema}.user_infos ui
+                    JOIN {schema}.users u ON u.id=ui.user_id
                     WHERE u.name=:user;
-                """)
+                """.format(schema=qwc_config_schema))
                 result = conn.execute(sql, {"user": identity.get("username")})
 
                 row = result.first()
@@ -265,10 +267,10 @@ class QWC2Viewer:
                     with db.connect() as conn:
                         sql = sql_text("""
                             SELECT *
-                            FROM qwc_config.user_infos ui
-                            JOIN qwc_config.users u ON u.id=ui.user_id
+                            FROM {schema}.user_infos ui
+                            JOIN {schema}.users u ON u.id=ui.user_id
                             WHERE u.name=:user;
-                        """)
+                        """.format(schema=qwc_config_schema))
                         result = conn.execute(sql, {"user": identity.get("username")})
 
                         row = result.first()
@@ -373,16 +375,17 @@ class QWC2Viewer:
         with db.begin() as conn:
             sql = sql_text("""
                 WITH "user" AS (
-                    SELECT id FROM "qwc_config"."users" WHERE name=:username
+                    SELECT id FROM "{schema}"."users" WHERE name=:username
                 )
-                INSERT INTO "qwc_config"."user_infos" ("user_id", {columns})
+                INSERT INTO "{schema}"."user_infos" ("user_id", {columns})
                 SELECT id, {values_sql} FROM "user"
                 ON CONFLICT ("user_id") DO
                 UPDATE SET ({columns}) = ROW({values_sql})
                 RETURNING ({columns})
             """.format(
                 columns = ",".join(columns),
-                values_sql = ",".join(values_sql)
+                values_sql = ",".join(values_sql),
+                schema=qwc_config_schema
             ))
             result = conn.execute(sql, values)
             row = result.one_or_none()
