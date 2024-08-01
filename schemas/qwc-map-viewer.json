@@ -24,6 +24,10 @@
           "description": "DB connection URL (for user_info_fields). Can be set to an empty string if running without DB.",
           "type": "string"
         },
+        "qwc_config_schema": {
+          "description": "The name of the DB schema which stores the qwc config. Default: qwc_config",
+          "type": "string"
+        },
         "qwc2_path": {
           "description": "Path to QWC2 files",
           "type": "string"

@@ -14,8 +14,6 @@ from qwc_services_core.permissions_reader import PermissionsReader
 from qwc_services_core.runtime_config import RuntimeConfig
 
 
-qwc_config_schema = os.getenv("QWC_CONFIG_SCHEMA", "qwc_config")
-
 db_engine = DatabaseEngine()
 
 
@@ -95,6 +93,7 @@ class QWC2Viewer:
             config.get('internal_permalink_service_url', default_url))
 
         self.db_url = config.get('db_url', 'postgresql:///?service=qwc_configdb')
+        self.qwc_config_schema = config.get('qwc_config_schema', 'qwc_config')
 
         self.show_restricted_themes = config.get('show_restricted_themes', False)
         self.show_restricted_themes_whitelist = config.get('show_restricted_themes_whitelist', "")
@@ -140,7 +139,7 @@ class QWC2Viewer:
                     FROM {schema}.user_infos ui
                     JOIN {schema}.users u ON u.id=ui.user_id
                     WHERE u.name=:user;
-                """.format(schema=qwc_config_schema))
+                """.format(schema=self.qwc_config_schema))
                 result = conn.execute(sql, {"user": identity.get("username")})
 
                 row = result.first()
@@ -270,7 +269,7 @@ class QWC2Viewer:
                             FROM {schema}.user_infos ui
                             JOIN {schema}.users u ON u.id=ui.user_id
                             WHERE u.name=:user;
-                        """.format(schema=qwc_config_schema))
+                        """.format(schema=self.qwc_config_schema))
                         result = conn.execute(sql, {"user": identity.get("username")})
 
                         row = result.first()
@@ -385,7 +384,7 @@ class QWC2Viewer:
             """.format(
                 columns = ",".join(columns),
                 values_sql = ",".join(values_sql),
-                schema=qwc_config_schema
+                schema=self.qwc_config_schema
             ))
             result = conn.execute(sql, values)
             row = result.one_or_none()
