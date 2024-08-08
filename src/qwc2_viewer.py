@@ -1205,6 +1205,7 @@ class QWC2Viewer:
                 self.permissions_handler.resource_permissions(
                     'solr_facets', identity
                 )
+            all_facets_permitted = '*' in permitted_solr_facets
 
             for search_provider in item['searchProviders']:
                 if (
@@ -1215,12 +1216,12 @@ class QWC2Viewer:
                     if 'default' in search_provider:
                         search_provider['default'] = [
                             facet for facet in search_provider['default']
-                            if facet in permitted_solr_facets
+                            if facet in permitted_solr_facets or all_facets_permitted
                         ]
                     if 'layers' in search_provider:
                         layers = {}
                         for layer, facet in search_provider['layers'].items():
-                            if facet in permitted_solr_facets:
+                            if facet in permitted_solr_facets or all_facets_permitted:
                                 layers[layer] = facet
                         if layers:
                             search_provider['layers'] = layers
