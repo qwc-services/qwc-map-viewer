@@ -11,8 +11,6 @@ from qwc_services_core.runtime_config import RuntimeConfig
 from qwc2_viewer import QWC2Viewer
 
 # Autologin config
-AUTH_REQUIRED = os.environ.get(
-    'AUTH_REQUIRED', '0') not in [0, "0", False, "false", "False", "FALSE"]
 AUTH_PATH = os.environ.get(
     'AUTH_SERVICE_URL',
     # For backward compatiblity
@@ -73,11 +71,11 @@ def assert_user_is_logged():
     if request.path in public_paths:
         return
 
-    if AUTH_REQUIRED:
+    if config.get("auth_required", False):
         identity = get_identity()
         if identity is None:
             app.logger.info("Access denied, authentication required")
-            prefix = auth_path_prefix()
+            prefix = auth_path_prefix().rstrip('/')
             return redirect(prefix + '/login?url=%s' % urllib.parse.quote(request.url))
 
 
