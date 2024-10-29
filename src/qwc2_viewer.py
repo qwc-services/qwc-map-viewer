@@ -229,7 +229,7 @@ class QWC2Viewer:
         if self.dataproduct_service_url:
             config['dataproductServiceUrl'] = self.dataproduct_service_url
         if self.document_service_url:
-            config['featureReportService'] = self.document_service_url
+            config['documentServiceUrl'] = self.document_service_url
         if self.elevation_service_url:
             config['elevationServiceUrl'] = self.elevation_service_url
         if self.landreg_service_url:
