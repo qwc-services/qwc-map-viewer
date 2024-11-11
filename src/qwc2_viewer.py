@@ -1165,11 +1165,12 @@ class QWC2Viewer:
         permitted_bg_layers = self.permissions_handler.resource_permissions(
             'background_layers', identity
         )
+        all_bg_permitted = '*' in permitted_bg_layers
 
         # filter background layers by permissions
         themes['backgroundLayers'] = [
             layer for layer in themes['backgroundLayers']
-            if layer['name'] in permitted_bg_layers
+            if layer['name'] in permitted_bg_layers or all_bg_permitted
         ]
 
     def filter_item_background_layers(self, item, identity):
@@ -1186,11 +1187,12 @@ class QWC2Viewer:
         permitted_bg_layers = self.permissions_handler.resource_permissions(
             'background_layers', identity
         )
+        all_bg_permitted = '*' in permitted_bg_layers
 
         # filter background layers by permissions
         item['backgroundLayers'] = [
             layer for layer in item['backgroundLayers']
-            if layer['name'] in permitted_bg_layers
+            if layer['name'] in permitted_bg_layers or all_bg_permitted
         ]
 
     def filter_item_search_providers(self, item, identity):
