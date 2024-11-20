@@ -220,7 +220,7 @@ Example:
 
 * `viewer_tasks`: permitted menu items if any are restricted
 * `wms_services`: permitted WMS services, layers and print templates
-* `background_layers`: permitted background layers
+* `background_layers`: permitted background layers (use the wildcard string "*" to allow all background layers)
 * `data_datasets`: permitted datasets for editing
 
 In this example, the _Raster Export_ map tool will only be visible for users with the role `demo`.
