@@ -21,7 +21,7 @@
       "type": "object",
       "properties": {
         "db_url": {
-          "description": "DB connection URL (for user_info_fields). Can be set to an empty string if running without DB.",
+          "description": "DB connection URL (for user_info_fields). Can be set to an empty string if running without DB. Default: `postgresql:///?service=qwc_configdb`",
           "type": "string"
         },
         "qwc_config_schema": {
@@ -124,7 +124,7 @@
           "type": "boolean"
         },
         "user_info_fields": {
-          "description": "List of user info fields to read from JWT identity",
+          "description": "List of user info fields to read from DB (if db_url is set) or from JWT identity",
           "type": "array",
           "items": {
             "type": "string"
