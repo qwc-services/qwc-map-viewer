@@ -1,4 +1,4 @@
-FROM sourcepole/qwc-map-viewer-base:latest
+FROM sourcepole/qwc-map-viewer-base:latest-2024-lts
 
 ARG QWC2_URL
 # Optional token for download with authorization
