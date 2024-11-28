@@ -1,4 +1,5 @@
-FROM sourcepole/qwc-map-viewer-base:latest
+ARG BASE_IMAGE_VERSION=latest-lts
+FROM sourcepole/qwc-map-viewer-base:$BASE_IMAGE_VERSION
 
 ARG QWC2_URL
 # Optional token for download with authorization
