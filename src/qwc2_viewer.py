@@ -1212,24 +1212,32 @@ class QWC2Viewer:
             for search_provider in item['searchProviders']:
                 if (
                     'provider' in search_provider
-                    and search_provider['provider'] == 'solr'
+                    and (
+                        search_provider['provider'] == 'solr' or
+                        search_provider['provider'] == 'fulltext'
+                    )
                 ):
-                    # filter Solr facets by permissions
+                    # filter fulltext search facets by permissions
+                    # NOTE: adapt from old syntax solr -> fulltext, move 'default' and 'layers' below 'params'
+                    search_provider['provider'] = 'fulltext'
+                    search_provider['params'] = search_provider.get('params', {})
+                    default_facets = search_provider['params'].get('default', search_provider.get('default', []))
+                    layer_facets = search_provider['params'].get('layers', search_provider.get('layers', {}))
+
+                    search_provider['params']['default'] = [
+                        facet for facet in default_facets
+                        if facet in permitted_solr_facets or all_facets_permitted
+                    ]
                     if 'default' in search_provider:
-                        search_provider['default'] = [
-                            facet for facet in search_provider['default']
-                            if facet in permitted_solr_facets or all_facets_permitted
-                        ]
+                        del search_provider['default']
+
+                    layers = {}
+                    for layer, facet in layer_facets.items():
+                        if facet in permitted_solr_facets or all_facets_permitted:
+                            layers[layer] = facet
+                    search_provider['params']['layers'] = layers
                     if 'layers' in search_provider:
-                        layers = {}
-                        for layer, facet in search_provider['layers'].items():
-                            if facet in permitted_solr_facets or all_facets_permitted:
-                                layers[layer] = facet
-                        if layers:
-                            search_provider['layers'] = layers
-                        else:
-                            # remove if no layer search permitted
-                            del search_provider['layers']
+                        del search_provider['layers']
 
                     # filter layer searchterms
                     self.filter_layer_searchterms(item, permitted_solr_facets)
