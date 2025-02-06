@@ -533,12 +533,16 @@ class QWC2Viewer:
         """
         removeIndex = None
         for (idx, item) in enumerate(items):
-            if item["key"] == "Login" and signed_in:
+            # Convert legacy name
+            if item["key"] == "Login":
+                item["key"] = "Authentication"
+                item["mode"] = "Login"
+            if item["key"] == "Authentication" and signed_in:
                 if hide:
                     removeIndex = idx
                     break
                 else:
-                    item["key"] = "Logout"
+                    item["mode"] = "Logout"
                     item["icon"] = "logout"
             elif "subitems" in item:
                 self.__replace_login__helper_items(
