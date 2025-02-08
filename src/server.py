@@ -26,6 +26,8 @@ jwt = auth_manager(app)
 
 # create tenant handler
 tenant_handler = TenantHandler(app.logger)
+app.wsgi_app = TenantPrefixMiddleware(app.wsgi_app)
+app.session_interface = TenantSessionInterface()
 
 
 def qwc2_viewer_handler():
@@ -47,10 +49,6 @@ def with_no_cache_headers(response):
     response.headers["Pragma"] = "no-cache"
     response.headers["Expires"] = "0"
     return response
-
-
-app.wsgi_app = TenantPrefixMiddleware(app.wsgi_app)
-app.session_interface = TenantSessionInterface(os.environ)
 
 
 def auth_path_prefix():
