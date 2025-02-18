@@ -534,10 +534,10 @@ class QWC2Viewer:
         removeIndex = None
         for (idx, item) in enumerate(items):
             # Convert legacy name
-            if item["key"] == "Login":
+            if item.get("key") == "Login":
                 item["key"] = "Authentication"
                 item["mode"] = "Login"
-            if item["key"] == "Authentication" and signed_in:
+            if item.get("key") == "Authentication" and signed_in:
                 if hide:
                     removeIndex = idx
                     break
