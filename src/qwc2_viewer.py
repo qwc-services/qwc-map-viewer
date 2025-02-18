@@ -533,7 +533,7 @@ class QWC2Viewer:
         """
         removeIndex = None
         for (idx, item) in enumerate(items):
-            if item["key"] == "Login" and signed_in:
+            if item.get("key") == "Login" and signed_in:
                 if hide:
                     removeIndex = idx
                     break
