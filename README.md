@@ -1,20 +1,20 @@
 [![](https://github.com/qwc-services/qwc-map-viewer/workflows/build/badge.svg)](https://github.com/qwc-services/qwc-map-viewer/actions)
-[![docker](https://img.shields.io/docker/v/sourcepole/qwc-map-viewer-demo?label=Docker%20image&sort=semver)](https://hub.docker.com/r/sourcepole/qwc-map-viewer-demo)
+[![docker](https://img.shields.io/docker/v/sourcepole/qwc-map-viewer?label=Docker%20image&sort=semver)](https://hub.docker.com/r/sourcepole/qwc-map-viewer)
 
 QWC Map Viewer
 ==============
 
-Provide a [QWC2 Web Client](https://github.com/qgis/qwc2-demo-app) application using QWC services.
+Provide a [QWC2 Web Client](https://github.com/qgis/qwc2) application using QWC services.
 
 **Note:** Requires a QWC OGC service or QGIS server running on `ogc_service_url`. Additional QWC Services are optional.
 
 
 Setup
------
+--------------------------
 
-Copy your QWC2 files from a production build (see [QWC2 Quick start](https://github.com/qgis/qwc2-demo-app/blob/master/doc/src/quick_start.md)):
+Copy your QWC2 files from a production build:
 
-    SRCDIR=path/to/qwc2-app/prod/ DSTDIR=$PWD
+    SRCDIR=path/to/qwc2/prod/ DSTDIR=$PWD
     mkdir $DSTDIR/qwc2 && mkdir $DSTDIR/qwc2/dist
     cd $SRCDIR && \
     cp -r assets $DSTDIR/qwc2 && \
@@ -109,11 +109,11 @@ Additional user info fields may be read from the JWT identity by setting `user_i
 ```
 These will be added as `user_infos` in the `config.json` response if present in the current identity.
 
-`qwc2_config` contains the QWC2 application configuration, with `config` corresponding to the contents of your standalone `config.json` file (see [Documentation](https://github.com/qgis/qwc2-demo-app/blob/master/doc/src/qwc_configuration.md#application-configuration-the-configjson-and-jsappconfigjs-files)).
+`qwc2_config` contains the QWC2 application configuration, with `config` corresponding to the contents of your standalone `config.json` file (see [Documentation](https://qwc-services.github.io/master/configuration/ViewerConfiguration/#load-time-configuration-configjson)).
 
 `qwc2_themes` contains the full themes configuration, corresponding to the contents of your standalone `themes.json` collected from `themesConfig.json`.
 
-Add new themes to your `themesConfig.json` (see [Documentation](https://github.com/qgis/qwc2-demo-app/blob/master/doc/src/qwc_configuration.md#theme-configuration-qgis-projects-and-the-themesconfigjson-file)) and put any theme thumbnails into `$QWC2_PATH/assets/img/mapthumbs/`.
+Add new themes to your `themesConfig.json` (see [Documentation](https://qwc-services.github.io/master/configuration/ThemesConfiguration/)) and put any theme thumbnails into `$QWC2_PATH/assets/img/mapthumbs/`.
 The `themesConfig.json` file is used to collect the full themes configuration using GetProjectSettings.
 
 Optional settings for restricted themes:
@@ -245,22 +245,18 @@ Docker images
 -------------
 
 The following Docker images are available:
-* `sourcepole/qwc-map-viewer-base`: Map viewer service
-* `sourcepole/qwc-map-viewer-demo`: Map viewer service with qwc-demo-app viewer
+* `sourcepole/qwc-map-viewer`: Map viewer service with stock qwc2 application
+* `sourcepole/qwc-map-viewer-base`: Map viewer service to use with a custom qwc2 application
 
 Dependencies:
 
         git repos                Docker images
 
      ┌───────────────┐
-     │     qwc2      │
-     └───────┬───────┘
-             │submodule
-     ┌───────▼───────┐
-     │ qwc-demo-app  ├────────────┐
-     │    config.json│ CI Build   │
+     │     qwc2      ├────────────┐
+     │  config.json  │ CI Build   │
      └───────────────┘      ┌─────▼───────────────┐
-                         ┌──► qwc-map-viewer-demo │
+                         ┌──► qwc-map-viewer      │
      ┌───────────────┐   │  └─────────────────────┘
      │ qwc-map-viewer├───┤
      └───────────────┘   │  ┌─────────────────────┐
@@ -289,9 +285,9 @@ Those services can be found under https://github.com/qwc-services/. The followin
 
 **Step 3: Choose between a version of the qwc-map-viewer**
 
-#### qwc-map-viewer-demo
+#### qwc-map-viewer
 
-This is the demo version used in the `docker-compose-example.yml` file. With this version, the docker image comes with a preinstalled version of the latest qwc2-demo-app build and the python application for the viewer. Use this docker image, if you don't have your own build of the QWC2 app.
+This is the stock version used in the `docker-compose-example.yml` file. With this version, the docker image comes with a preinstalled version of the latest qwc2 stock application build and the python application for the viewer. Use this docker image, if you don't have your own build of the QWC2 app.
 
 #### qwc-map-viewer-base
 
