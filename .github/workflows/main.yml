@@ -45,25 +45,11 @@ jobs:
           password: ${{ secrets.DOCKER_HUB_PASSWORD }}
           tags: "${{ steps.get_tag.outputs.tag }}"
 
-      - name: Build and publish demo image
+      - name: Build and publish stock image
         uses: elgohr/Publish-Docker-Github-Action@v5
         if: github.event_name != 'pull_request'
         env:
-          QWC2_URL: https://github.com/qgis/qwc2-demo-app/releases/download/${{ steps.get_tag.outputs.app_version }}/qwc2-demo-app.zip
-          BASE_IMAGE_VERSION: ${{ steps.get_tag.outputs.app_version }}
-        with:
-          name: sourcepole/qwc-map-viewer-demo
-          username: ${{ secrets.DOCKER_HUB_USER }}
-          password: ${{ secrets.DOCKER_HUB_PASSWORD }}
-          tags: "${{ steps.get_tag.outputs.tag }}"
-          dockerfile: Dockerfile-qwc2-app
-          buildargs: QWC2_URL,BASE_IMAGE_VERSION
-
-      - name: Build and publish default image
-        uses: elgohr/Publish-Docker-Github-Action@v5
-        if: github.event_name != 'pull_request'
-        env:
-          QWC2_URL: https://github.com/qgis/qwc2-demo-app/releases/download/${{ steps.get_tag.outputs.app_version }}/qwc2-demo-app.zip
+          QWC2_URL: https://github.com/qgis/qwc2/releases/download/${{ steps.get_tag.outputs.app_version }}/qwc2-stock-app.zip
           BASE_IMAGE_VERSION: ${{ steps.get_tag.outputs.app_version }}
         with:
           name: sourcepole/qwc-map-viewer
