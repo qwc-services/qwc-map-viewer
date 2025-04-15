@@ -1094,7 +1094,7 @@ class QWC2Viewer:
             item['editConfig'] = edit_config
         else:
             # no permitted datasets
-            item['editConfig'] = None
+            item['editConfig'] = {}
 
     def permitted_dataset(self, dataset, config, identity):
         """Return edit dataset filtered by permissions.
