@@ -1003,6 +1003,7 @@ class QWC2Viewer:
         # combine permissions
         permitted_layers = set()
         permitted_print_templates = set()
+        permitted_3d_tilesets = set()
         for permission in wms_permissions:
             # collect permitted layers
             permitted_layers.update([
@@ -1023,6 +1024,7 @@ class QWC2Viewer:
         self.filter_item_theme_info_links(item, identity)
         self.filter_item_plugin_data(item, identity)
         self.filter_item_snapping_config(item, identity, permitted_layers)
+        self.filter_item_3d_tilesets(item, identity)
 
         return item
 
@@ -1467,3 +1469,24 @@ class QWC2Viewer:
             item['snapping']['snaplayers'] = list(
                 filter(lambda entry: entry['name'] in permitted_layers, item['snapping']['snaplayers'])
             )
+
+    def filter_item_3d_tilesets(self, item, identity):
+        """Filter theme item 3d tilesets by permissions.
+
+        :param obj item: Theme item
+        :param obj identity: User identity
+        """
+        if 'map3d' in item:
+            # get permissions for theme info links
+            permitted_3d_tilesets = \
+                self.permissions_handler.resource_permissions(
+                    'tilesets_3d', identity
+                )
+
+            # filter theme info links by permissions
+            entries = [
+                entry for entry in item['map3d'].get('tiles3d', [])
+                if entry['name'] in permitted_3d_tilesets
+            ]
+            if entries:
+                item['map3d']['tiles3d'] = entries
