@@ -31,8 +31,10 @@ jobs:
         run: |
           if [ ${{ endsWith(github.ref, '-lts') }} = true ]; then
             echo "tag=latest-lts,latest-${GITHUB_REF:11:4}-lts,${GITHUB_REF:10}" >>$GITHUB_OUTPUT
+            echo "bundle_version=${GITHUB_REF:10:5}.0.${GITHUB_REF:16}" >>$GITHUB_OUTPUT
           else
             echo "tag=latest,${GITHUB_REF:10}" >>$GITHUB_OUTPUT
+            echo "bundle_version=${GITHUB_REF:10}" >>$GITHUB_OUTPUT
           fi
           echo "app_version=${GITHUB_REF:10}" >>$GITHUB_OUTPUT
 
@@ -49,7 +51,7 @@ jobs:
         uses: elgohr/Publish-Docker-Github-Action@v5
         if: github.event_name != 'pull_request'
         env:
-          QWC2_URL: https://github.com/qgis/qwc2/releases/download/${{ steps.get_tag.outputs.app_version }}/qwc2-stock-app.zip
+          QWC2_URL: https://github.com/qgis/qwc2/releases/download/${{ steps.get_tag.outputs.bundle_version }}/qwc2-stock-app.zip
           BASE_IMAGE_VERSION: ${{ steps.get_tag.outputs.app_version }}
         with:
           name: sourcepole/qwc-map-viewer
@@ -63,7 +65,7 @@ jobs:
         uses: elgohr/Publish-Docker-Github-Action@v5
         if: github.event_name != 'pull_request'
         env:
-          QWC2_URL: https://github.com/qgis/qwc2/releases/download/${{ steps.get_tag.outputs.app_version }}/qwc2-stock-app.zip
+          QWC2_URL: https://github.com/qgis/qwc2/releases/download/${{ steps.get_tag.outputs.bundle_version }}/qwc2-stock-app.zip
           BASE_IMAGE_VERSION: ${{ steps.get_tag.outputs.app_version }}
         with:
           name: sourcepole/qwc-map-viewer-demo
