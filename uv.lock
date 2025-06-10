@@ -386,7 +386,7 @@ wheels = [
 
 [[package]]
 name = "qwc-map-viewer"
-version = "2025.6.4"
+version = "2025.6.10"
 source = { virtual = "." }
 dependencies = [
     { name = "flask" },
