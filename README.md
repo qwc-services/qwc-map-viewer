@@ -263,51 +263,16 @@ Dependencies:
                          └──► qwc-map-viewer-base │
                             └─────────────────────┘
 
-### Run docker image
-
-To run this docker image you will need the following three additional services:
-
-* qwc-postgis
-* qwc-qgis-server
-* qwc-ogc-service
-* qwc-data-service
-
-Those services can be found under https://github.com/qwc-services/. The following steps explain how to download those services and how to run the `qwc-map-viewer` with `docker-compose`.
-
-**Step 1: Clone qwc-docker**
-
-    git clone https://github.com/qwc-services/qwc-docker
-    cd qwc-docker
-
-**Step 2: Create docker-compose.yml file**
-
-    cp docker-compose-example.yml docker-compose.yml
-
-**Step 3: Choose between a version of the qwc-map-viewer**
-
 #### qwc-map-viewer
 
 This is the stock version used in the `docker-compose-example.yml` file. With this version, the docker image comes with a preinstalled version of the latest qwc2 stock application build and the python application for the viewer. Use this docker image, if you don't have your own build of the QWC2 app.
 
 #### qwc-map-viewer-base
 
-If you want to use your own QWC2 build then this is the docker image that you want to use. This docker image comes with only the python application installed on. Here is an example, on how you can add you own QWC2 build to the docker image:
+If you want to use your own QWC2 build then this is the docker image that you want to use. This docker image comes with only the python application installed on. Here is an example, on how you can add you own QWC2 build to the docker image.
 
-```
-qwc-map-viewer:
-    image: sourcepole/qwc-map-viewer-base
-    ports:
-        - "127.0.0.1:5030:9090"
-    # Here you mount your own QWC2 build
-    volumes:
-        - /PATH_TO_QWC2_BUILD/:/qwc2:ro
-        - /PATH_TO_CONFIG:/srv/qwc_service/config:ro
-```
-**Step 4: Start docker containers**
 
-    docker-compose up qwc-map-viewer
-
-For more information please visit: https://github.com/qwc-services/qwc-docker
+See sample [docker-compose.yml](https://github.com/qwc-services/qwc-docker/blob/master/docker-compose-example.yml) of [qwc-docker](https://github.com/qwc-services/qwc-docker).
 
 
 Development
