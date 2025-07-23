@@ -300,11 +300,11 @@ class QWC2Viewer:
             params.get("autologin") is not None)
         if 'common' in config['plugins']:
             self.__replace_login__helper_plugins(
-                config['plugins']['common'], signed_in, hide_login)
+                config['plugins']['common'], signed_in, username, hide_login)
         self.__replace_login__helper_plugins(
-            config['plugins']['mobile'], signed_in, hide_login)
+            config['plugins']['mobile'], signed_in, username, hide_login)
         self.__replace_login__helper_plugins(
-            config['plugins']['desktop'], signed_in, hide_login)
+            config['plugins']['desktop'], signed_in, username, hide_login)
 
         # filter any restricted viewer task items
         viewer_task_permissions = self.viewer_task_permissions(identity)
@@ -507,7 +507,7 @@ class QWC2Viewer:
 
         return theme_ids
 
-    def __replace_login__helper_plugins(self, plugins, signed_in, hide):
+    def __replace_login__helper_plugins(self, plugins, signed_in, username, hide):
         """Search plugins configurations and call
            self.__replace_login__helper_items on menuItems and toolbarItems
 
@@ -520,12 +520,12 @@ class QWC2Viewer:
                 continue
             if "menuItems" in plugin["cfg"]:
                 self.__replace_login__helper_items(
-                    plugin["cfg"]["menuItems"], signed_in, hide)
+                    plugin["cfg"]["menuItems"], signed_in, username, hide)
             if "toolbarItems" in plugin["cfg"]:
                 self.__replace_login__helper_items(
-                    plugin["cfg"]["toolbarItems"], signed_in, hide)
+                    plugin["cfg"]["toolbarItems"], signed_in, username, hide)
 
-    def __replace_login__helper_items(self, items, signed_in, hide):
+    def __replace_login__helper_items(self, items, signed_in, username, hide):
         """Replace Login with Logout if identity is not None on Login items in
            menuItems and toolbarItems.
 
@@ -545,9 +545,10 @@ class QWC2Viewer:
                 else:
                     item["mode"] = "Logout"
                     item["icon"] = "logout"
+                    item["trargs"] = [username]
             elif "subitems" in item:
                 self.__replace_login__helper_items(
-                    item["subitems"], signed_in, hide)
+                    item["subitems"], signed_in, username, hide)
         if removeIndex is not None:
             del items[removeIndex]
 
