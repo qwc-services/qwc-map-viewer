@@ -100,11 +100,12 @@ def qwc2_themes():
 
 
 @app.route('/assets/<path:path>')
+@optional_auth
 # lang: Optional, asset language, i.e. en-US
 def qwc2_assets(path):
     qwc2_viewer = qwc2_viewer_handler()
     lang = request.args.get('lang', None)
-    return qwc2_viewer.qwc2_assets(path, lang)
+    return qwc2_viewer.qwc2_assets(path, get_identity(), lang)
 
 @app.route('/data/<path:path>')
 def qwc2_data(path):

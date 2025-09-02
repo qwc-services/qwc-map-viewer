@@ -631,13 +631,27 @@ class QWC2Viewer:
         for subdir in themes.get('subdirs', []):
             self.__update_service_urls(subdir)
 
-    def qwc2_assets(self, path, lang):
+    def qwc2_assets(self, path, identity, lang):
         """Return QWC2 asset from assets/ or temporary image dir.
 
         :param str path: Asset path
         :param str lang: Asset language
         """
+        restricted_viewer_assets = self.resources['qwc2_config'].get(
+            'restricted_viewer_assets', []
+        )
+
+        # get permitted viewer tasks
+        permitted_viewer_assets = self.permissions_handler.resource_permissions(
+            'viewer_assets', identity
+        )
+
+        if path in restricted_viewer_assets and not path in permitted_viewer_assets:
+            self.logger.debug("Asset %s is not permitted, returning 404" % path)
+            return abort(404)
+
         if not path.startswith(self.BASE64_IMAGE_ROUTE_PREFIX):
+
             # Special case for ui files: return translated UI
             if path.lower().endswith('.ui'):
                 return self.translate_designer_form(path, lang)
