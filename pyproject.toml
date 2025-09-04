@@ -1,6 +1,6 @@
 [project]
 name = "qwc-map-viewer"
-version = "v2025.09.03"
+version = "v2025.09.04"
 description = "QWC Map Viewer"
 readme = "README.md"
 requires-python = ">=3.10"
