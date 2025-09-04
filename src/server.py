@@ -94,9 +94,11 @@ def qwc2_config():
 
 @app.route('/themes.json')
 @optional_auth
+# lang: Optional, asset language, i.e. en-US
 def qwc2_themes():
     qwc2_viewer = qwc2_viewer_handler()
-    return with_no_cache_headers(qwc2_viewer.qwc2_themes(get_identity()))
+    lang = request.args.get('lang', None)
+    return with_no_cache_headers(qwc2_viewer.qwc2_themes(get_identity(), lang))
 
 
 @app.route('/assets/<path:path>')

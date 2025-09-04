@@ -172,7 +172,7 @@ class QWC2Viewer:
         # If there are no permitted themes, redirect to auth
         if self.redirect_to_auth_if_no_permitted_themes:
             permitted_theme_ids = []
-            themes = self.permitted_themes(identity, permitted_theme_ids)
+            themes = self.permitted_themes(identity, None, permitted_theme_ids)
             if len(permitted_theme_ids) == 0:
                 if self.auth_service_url:
                     # redirect to login on auth service
@@ -487,7 +487,7 @@ class QWC2Viewer:
             return False
 
         # check whether theme is not public
-        public_theme_ids = self.__collect_theme_ids(self.permitted_themes(None))
+        public_theme_ids = self.__collect_theme_ids(self.permitted_themes(None, None))
         return theme not in public_theme_ids
 
     def __collect_theme_ids(self, theme_group):
@@ -598,15 +598,16 @@ class QWC2Viewer:
         for item in items_to_remove:
             items.remove(item)
 
-    def qwc2_themes(self, identity):
+    def qwc2_themes(self, identity, lang):
         """Return QWC2 themes.json for user.
 
         :param obj identity: User identity
+        : param str lang: Viewer language
         """
         self.logger.debug('Getting themes.json for identity: %s', identity)
 
         # filter by permissions
-        themes = self.permitted_themes(identity)
+        themes = self.permitted_themes(identity, lang)
 
         self.__update_service_urls(themes)
 
@@ -905,7 +906,7 @@ class QWC2Viewer:
 
         return viewer_tasks
 
-    def permitted_themes(self, identity, permitted_theme_ids=[]):
+    def permitted_themes(self, identity, lang, permitted_theme_ids=[]):
         """Return qwc2_themes filtered by permissions.
 
         :param obj identity: User identity
@@ -917,7 +918,7 @@ class QWC2Viewer:
         # filter theme items by permissions
         items = []
         for item in themes['items']:
-            permitted_item = self.permitted_theme_item(item, identity)
+            permitted_item = self.permitted_theme_item(item, identity, lang)
             if permitted_item:
                 permitted_theme_ids.append(permitted_item['id'])
                 items.append(permitted_item)
@@ -929,7 +930,7 @@ class QWC2Viewer:
         # filter theme groups by permissions
         groups = []
         for group in themes['subdirs']:
-            permitted_group = self.permitted_theme_group(group, identity, permitted_theme_ids)
+            permitted_group = self.permitted_theme_group(group, identity, lang, permitted_theme_ids)
             if permitted_group:
                 groups.append(permitted_group)
 
@@ -947,17 +948,18 @@ class QWC2Viewer:
 
         return themes
 
-    def permitted_theme_group(self, theme_group, identity, permitted_theme_ids):
+    def permitted_theme_group(self, theme_group, identity, lang, permitted_theme_ids):
         """Return theme group filtered by permissions.
 
         :param obj theme_group: Theme group
         :param obj identity: User identity
+        :param str lang: The viewer language
         :param list permitted_theme_ids: List of permitted theme ids
         """
         # collect theme items
         items = []
         for item in theme_group['items']:
-            permitted_item = self.permitted_theme_item(item, identity)
+            permitted_item = self.permitted_theme_item(item, identity, lang)
             if permitted_item:
                 permitted_theme_ids.append(permitted_item['id'])
                 items.append(permitted_item)
@@ -970,7 +972,7 @@ class QWC2Viewer:
         subgroups = []
         for subgroup in theme_group['subdirs']:
             # recursively filter sub group
-            permitted_subgroup = self.permitted_theme_group(subgroup, identity, permitted_theme_ids)
+            permitted_subgroup = self.permitted_theme_group(subgroup, identity, lang, permitted_theme_ids)
             if permitted_subgroup:
                 subgroups.append(permitted_subgroup)
 
@@ -1001,11 +1003,12 @@ class QWC2Viewer:
             "restricted": True
         })
 
-    def permitted_theme_item(self, item, identity):
+    def permitted_theme_item(self, item, identity, lang):
         """Return theme item filtered by permissions.
 
         :param obj item: Theme item
         :param obj identity: User identity
+        :param str lang: The viewer language
         """
         # get permissions for WMS
         wms_permissions = self.permissions_handler.resource_permissions(
@@ -1040,6 +1043,10 @@ class QWC2Viewer:
         self.filter_item_plugin_data(item, identity)
         self.filter_item_snapping_config(item, identity, permitted_layers)
         self.filter_item_3d_tilesets(item, identity)
+        if lang in item['translations']:
+            item['translations'] = item['translations'][lang]
+        else:
+            item['translations'] = {}
 
         return item
 
