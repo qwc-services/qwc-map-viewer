@@ -1043,7 +1043,7 @@ class QWC2Viewer:
         self.filter_item_plugin_data(item, identity)
         self.filter_item_snapping_config(item, identity, permitted_layers)
         self.filter_item_3d_tilesets(item, identity)
-        if lang in item['translations']:
+        if lang in item.get('translations', []):
             item['translations'] = item['translations'][lang]
         else:
             item['translations'] = {}
