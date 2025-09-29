@@ -10,12 +10,6 @@ from qwc_services_core.tenant_handler import TenantHandler, TenantPrefixMiddlewa
 from qwc_services_core.runtime_config import RuntimeConfig
 from qwc2_viewer import QWC2Viewer
 
-# Autologin config
-AUTH_PATH = os.environ.get(
-    'AUTH_SERVICE_URL',
-    # For backward compatiblity
-    os.environ.get('AUTH_PATH', '/auth/'))
-
 # Flask application
 app = Flask(__name__)
 # disable verbose 404 error message
@@ -52,7 +46,11 @@ def with_no_cache_headers(response):
 
 
 def auth_path_prefix():
-    return app.session_interface.tenant_path_prefix().rstrip("/") + "/" + AUTH_PATH.lstrip("/")
+    tenant = tenant_handler.tenant()
+    config_handler = RuntimeConfig("mapViewer", app.logger)
+    config = config_handler.tenant_config(tenant)
+    auth_path = config.get('auth_service_url', '/auth/')
+    return app.session_interface.tenant_path_prefix().rstrip("/") + "/" + auth_path.lstrip("/")
 
 
 @app.before_request
