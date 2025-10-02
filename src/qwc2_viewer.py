@@ -1,4 +1,5 @@
 import base64
+import fnmatch
 import os
 import requests
 import tempfile
@@ -642,12 +643,14 @@ class QWC2Viewer:
             'restricted_viewer_assets', []
         )
 
-        # get permitted viewer tasks
+        # get permitted viewer assets
         permitted_viewer_assets = self.permissions_handler.resource_permissions(
             'viewer_assets', identity
         )
+        path_is_restricted = next((x for x in restricted_viewer_assets if fnmatch.fnmatch(path, x)), None)
+        path_is_permitted = next((x for x in permitted_viewer_assets if fnmatch.fnmatch(path, x)), None)
 
-        if path in restricted_viewer_assets and not path in permitted_viewer_assets:
+        if path_is_restricted and not path_is_permitted:
             self.logger.debug("Asset %s is not permitted, returning 404" % path)
             return abort(404)
 
