@@ -2,6 +2,7 @@ import base64
 import fnmatch
 import os
 import requests
+import secrets
 import tempfile
 from urllib.parse import urlparse, urlunparse, urlencode, urljoin, parse_qsl
 from xml.etree import ElementTree
@@ -204,7 +205,16 @@ class QWC2Viewer:
         # Inject CSRF token
         token = (get_jwt() or {}).get("csrf")
         if token:
-            viewer_index = viewer_index.replace('</head>', '<meta name="csrf-token" content="%s" />\n</head>' % token)
+            viewer_index = viewer_index.replace('<head>', '<head>\n<meta name="csrf-token" content="%s" />' % token)
+
+        # Inject CSP header and modify script tags
+        nonce = secrets.token_urlsafe()
+        csp = "; ".join([
+            "script-src 'nonce-%s' 'strict-dynamic'" % nonce,
+            # "style-src 'nonce-%s'" % nonce # TODO
+        ])
+        viewer_index = viewer_index.replace('<head>', '<head>\n<meta http-equiv="Content-Security-Policy" content="%s">' % csp)
+        viewer_index = viewer_index.replace('<script ', '<script nonce="%s" ' % nonce)
 
         return viewer_index
 
