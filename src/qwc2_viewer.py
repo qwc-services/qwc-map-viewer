@@ -108,6 +108,7 @@ class QWC2Viewer:
 
         self.user_info_fields = config.get('user_info_fields', [])
         self.display_user_info_field = config.get('display_user_info_field')
+        self.extra_csp_directives = config.get('extra_csp_directives')
 
         # get config dir for tenant
         self.config_dir = os.path.dirname(
@@ -213,6 +214,8 @@ class QWC2Viewer:
             "script-src 'nonce-%s' 'strict-dynamic'" % nonce,
             # "style-src 'nonce-%s'" % nonce # TODO
         ])
+        if self.extra_csp_directives:
+            csp += "; " + self.extra_csp_directives
         viewer_index = viewer_index.replace('<head>', '<head>\n<meta http-equiv="Content-Security-Policy" content="%s">' % csp)
         viewer_index = viewer_index.replace('<script ', '<script nonce="%s" ' % nonce)
 
