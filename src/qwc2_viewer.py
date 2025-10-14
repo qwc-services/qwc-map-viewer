@@ -274,6 +274,9 @@ class QWC2Viewer:
                 # NOTE: ignore group from identity
                 autologin = identity.get('autologin')
 
+                if self.display_user_info_field:
+                    display_username = identity.get(self.display_user_info_field)
+
                 if self.db_url:
                     # add custom user info fields
                     db = db_engine.db_engine(self.db_url)
