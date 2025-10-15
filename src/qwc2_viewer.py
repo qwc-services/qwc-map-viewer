@@ -96,6 +96,7 @@ class QWC2Viewer:
 
         self.db_url = config.get('db_url', 'postgresql:///?service=qwc_configdb')
         self.qwc_config_schema = config.get('qwc_config_schema', 'qwc_config')
+        self.store_config_by_userid = config.get('store_config_by_userid', True)
 
         self.show_restricted_themes = config.get('show_restricted_themes', False)
         self.show_restricted_themes_whitelist = config.get('show_restricted_themes_whitelist', "")
@@ -136,13 +137,22 @@ class QWC2Viewer:
             and isinstance(identity, dict) and self.db_url \
         :
             db = db_engine.db_engine(self.db_url)
-            with db.connect() as conn:
+
+            if self.store_config_by_userid:
                 sql = sql_text("""
                     SELECT *
-                    FROM {schema}.user_infos ui
-                    JOIN {schema}.users u ON u.id=ui.user_id
+                    FROM "{schema}".user_infos ui
+                    JOIN "{schema}".users u ON u.id=ui.user_id
                     WHERE u.name=:user;
                 """.format(schema=self.qwc_config_schema))
+            else:
+                sql = sql_text("""
+                    SELECT *
+                    FROM "{schema}".user_infos ui
+                    WHERE ui.username=:user;
+                """.format(schema=self.qwc_config_schema))
+
+            with db.connect() as conn:
                 result = conn.execute(sql, {"user": identity.get("username")})
 
                 row = result.first()
@@ -281,19 +291,28 @@ class QWC2Viewer:
                 if self.db_url:
                     # add custom user info fields
                     db = db_engine.db_engine(self.db_url)
-                    with db.connect() as conn:
+
+                    if self.store_config_by_userid:
                         sql = sql_text("""
                             SELECT *
-                            FROM {schema}.user_infos ui
-                            JOIN {schema}.users u ON u.id=ui.user_id
+                            FROM "{schema}".user_infos ui
+                            JOIN "{schema}".users u ON u.id=ui.user_id
                             WHERE u.name=:user;
                         """.format(schema=self.qwc_config_schema))
+                    else:
+                        sql = sql_text("""
+                            SELECT *
+                            FROM "{schema}".user_infos ui
+                            WHERE ui.username=:user;
+                        """.format(schema=self.qwc_config_schema))
+
+                    with db.connect() as conn:
                         result = conn.execute(sql, {"user": identity.get("username")})
 
                         row = result.first()
                         entries = row._asdict() if row else {}
 
-                        if self.display_user_info_field:
+                        if self.display_user_info_field and self.display_user_info_field in entries:
                             display_username = entries[self.display_user_info_field]
 
                         for field in self.user_info_fields:
@@ -389,8 +408,7 @@ class QWC2Viewer:
 
         values["username"] = identity.get("username")
 
-        db = db_engine.db_engine(self.db_url)
-        with db.begin() as conn:
+        if self.store_config_by_userid:
             sql = sql_text("""
                 WITH "user" AS (
                     SELECT id FROM "{schema}"."users" WHERE name=:username
@@ -405,6 +423,22 @@ class QWC2Viewer:
                 values_sql = ",".join(values_sql),
                 schema=self.qwc_config_schema
             ))
+        else:
+            sql = sql_text("""
+                INSERT INTO "{schema}"."user_infos" ("username", {columns})
+                VALUES (:username, {values_sql})
+                ON CONFLICT ("username") DO
+                UPDATE SET ({columns}) = ROW({values_sql})
+                RETURNING ({columns})
+            """.format(
+                columns = ",".join(columns),
+                values_sql = ",".join(values_sql),
+                schema=self.qwc_config_schema
+            ))
+
+
+        db = db_engine.db_engine(self.db_url)
+        with db.begin() as conn:
             result = conn.execute(sql, values)
             row = result.one_or_none()
             return_values = row._asdict() if row else None

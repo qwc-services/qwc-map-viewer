@@ -28,6 +28,10 @@
           "description": "The name of the DB schema which stores the qwc config. Default: qwc_config",
           "type": "string"
         },
+        "store_config_by_userid": {
+          "description": "Whether to store user config by userid instead of username. Default: true",
+          "type": "boolean"
+        },
         "qwc2_path": {
           "description": "Path to QWC2 files",
           "type": "string"
