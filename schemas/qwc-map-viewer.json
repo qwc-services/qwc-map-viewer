@@ -143,11 +143,11 @@
           "type": "array",
           "items": {
             "type": "string"
-          },
-          "extra_csp_directives": {
-            "description": "Extra Content-Security-Policy header directives",
-            "type": "string"
           }
+        },
+        "extra_csp_directives": {
+          "description": "Extra Content-Security-Policy header directives",
+          "type": "string"
         }
       },
       "required": [
