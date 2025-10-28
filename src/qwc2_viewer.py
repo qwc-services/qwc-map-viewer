@@ -211,7 +211,7 @@ class QWC2Viewer:
         # Inject CSP header and modify script tags
         nonce = secrets.token_urlsafe()
         csp = "; ".join([
-            "script-src 'nonce-%s' 'strict-dynamic'" % nonce,
+            "script-src 'nonce-%s' 'strict-dynamic' 'wasm-unsafe-eval'" % nonce,
             # "style-src 'nonce-%s'" % nonce # TODO
         ])
         if self.extra_csp_directives:
