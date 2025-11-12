@@ -343,8 +343,7 @@ class QWC2Viewer:
 
         config['username'] = display_username or username
         config['tenant'] = self.tenant
-        if user_infos:
-            config['user_infos'] = user_infos
+        config['user_infos'] = user_infos
 
         return jsonify(config)
 
