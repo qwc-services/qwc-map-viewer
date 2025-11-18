@@ -1057,6 +1057,7 @@ class QWC2Viewer:
 
         # filter by permissions
         self.filter_restricted_layers(item, permitted_layers)
+        self.filter_visibility_presets(item, permitted_layers)
         self.filter_print_templates(item, permitted_print_templates)
         self.filter_edit_config(item, identity)
         self.filter_item_background_layers(item, identity)
@@ -1091,6 +1092,17 @@ class QWC2Viewer:
                     sublayers.append(sublayer)
 
             layer['sublayers'] = sublayers
+
+    def filter_visibility_presets(self, item, permitted_layers):
+        """Filter visibility presets by permissions.
+
+        :param obj item: Theme item
+        :param set permitted_layers: List of permitted layers
+        """
+        for name, entries in item.get('visibilityPresets', {}).items():
+            item['visibilityPresets'][name] = dict([
+                kv for kv in entries.items() if kv[0].split('/')[-1] in permitted_layers
+            ])
 
     def filter_print_templates(self, item, permitted_print_templates):
         """Filter print templates by permissions.
