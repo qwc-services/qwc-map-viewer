@@ -223,6 +223,7 @@ class QWC2Viewer:
         viewer_index = viewer_index.replace('<head>', '<head>\n<meta http-equiv="Content-Security-Policy" content="%s">' % csp)
         viewer_index = viewer_index.replace('<script ', '<script nonce="%s" ' % nonce)
         viewer_index = viewer_index.replace('<script>', '<script nonce="%s">' % nonce)
+        viewer_index = viewer_index.replace('</head>', '<script nonce="%s">window.__CSP_NONCE__ = "%s";</script>\n</head>' % (nonce, nonce))
 
         return viewer_index
 
