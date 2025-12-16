@@ -98,6 +98,16 @@ def qwc2_themes():
     lang = request.args.get('lang', None)
     return with_no_cache_headers(qwc2_viewer.qwc2_themes(get_identity(), lang))
 
+@app.route('/editConfig.json')
+@optional_auth
+# map: Map id
+# layer: Layer name
+def edit_config():
+    qwc2_viewer = qwc2_viewer_handler()
+    wms_name = request.args.get('map', None)
+    layers = list(filter(bool, request.args.get('layers', "").split(",")))
+    return with_no_cache_headers(qwc2_viewer.edit_config(get_identity(), wms_name, layers))
+
 
 @app.route('/assets/<path:path>')
 @optional_auth

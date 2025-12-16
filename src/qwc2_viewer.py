@@ -635,6 +635,28 @@ class QWC2Viewer:
 
         return jsonify({"themes": themes})
 
+    def edit_config(self, identity, wms_name, layers):
+        self.logger.debug('Getting %s.{%s} editConfig for identity: %s', wms_name, ",".join(layers), identity)
+
+        # filter by permissions
+        themes = self.permitted_themes(identity, None)
+        editConfig = self.__search_edit_config(themes, wms_name, layers)
+        return jsonify(editConfig or {})
+
+    def __search_edit_config(self, themes, wms_name, layers):
+        for theme in themes.get('items', []):
+            if theme.get('wms_name') == wms_name:
+                editConfig = theme.get('editConfig', {})
+                return dict([
+                    (layer, editConfig[layer]) for layer in layers if layer in editConfig
+                ])
+
+        for subdir in themes.get('subdirs', []):
+            editConfig = self.__search_edit_config(subdir, wms_name, layer)
+            if editConfig:
+                return editConfig
+        return None
+
     def __update_service_urls(self, themes):
         for item in themes.get('items', []):
             if not item.get('wms_name'):
