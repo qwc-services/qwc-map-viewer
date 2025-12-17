@@ -900,7 +900,7 @@ class QWC2Viewer:
 
         # Attempt to load translation file
         try:
-            with open(full_path, 'r', encoding='utf-8') as fh:
+            with open(translation_path, 'r', encoding='utf-8') as fh:
                 translation = fh.read()
         except:
             return Response(form, mimetype='text/xml')
