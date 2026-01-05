@@ -70,8 +70,6 @@ class QWC2Viewer:
             config.get('permalink_service_url'))
         self.plotinfo_service_url = self.__sanitize_url(
             config.get('plotinfo_service_url'))
-        self.proxy_service_url = self.__sanitize_url(
-            config.get('proxy_service_url'))
         self.search_service_url = self.__sanitize_url(
             config.get('search_service_url'))
         self.search_data_service_url = self.__sanitize_url(

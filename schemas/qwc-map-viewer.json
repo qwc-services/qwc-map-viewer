@@ -92,10 +92,6 @@
           "description": "QWC Print Service URL",
           "type": "string"
         },
-        "proxy_service_url": {
-          "description": "Proxy Service URL",
-          "type": "string"
-        },
         "search_data_service_url": {
           "description": "QWC Search Result Service URL",
           "type": "string"
