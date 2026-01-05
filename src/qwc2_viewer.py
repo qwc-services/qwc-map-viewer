@@ -1089,6 +1089,7 @@ class QWC2Viewer:
         self.filter_item_plugin_data(item, identity)
         self.filter_item_snapping_config(item, identity, permitted_layers)
         self.filter_item_3d_tilesets(item, identity, permission.get('tilesets_3d', []))
+        self.filter_item_oblique_image_datasets(item, identity)
         if lang in item.get('translations', []):
             item['translations'] = item['translations'][lang]
         else:
@@ -1567,3 +1568,23 @@ class QWC2Viewer:
                 if entry['name'] in permitted_3d_tilesets
             ]
 
+    def filter_item_oblique_image_datasets(self, item, identity):
+        """Filter theme item 3d tilesets by permissions.
+
+        :param obj item: Theme item
+        :param obj identity: User identity
+        :param list permitted_oblique_datasets: permitted oblique image tilesets
+        """
+        # If wildcard permission is set, don't filter as they are all permitted
+        permitted_oblique_datasets = self.permissions_handler.resource_permissions(
+            'oblique_image_datasets', identity
+        )
+        if '*' in permitted_oblique_datasets:
+            return
+
+        if 'obliqueDatasets' in item:
+            # filter theme obliqueDatasets by permissions
+            item['obliqueDatasets'] = [
+                entry for entry in item['obliqueDatasets']
+                if entry['dataset'] in permitted_oblique_datasets
+            ]
