@@ -288,16 +288,19 @@ class QWC2Viewer:
             config['plugins']['desktop'], signed_in, username, hide_login)
 
         # filter any restricted viewer task items
-        viewer_task_permissions = self.viewer_task_permissions(identity)
+        # NOTE: viewer tasks are always permitted by default
+        restricted_viewer_tasks = self.permissions_handler.resource_restrictions(
+            'viewer_tasks', identity
+        )
         if 'common' in config['plugins']:
             self.__filter_restricted_viewer_tasks(
-                config['plugins']['common'], viewer_task_permissions
+                config['plugins']['common'], restricted_viewer_tasks
             )
         self.__filter_restricted_viewer_tasks(
-            config['plugins']['mobile'], viewer_task_permissions
+            config['plugins']['mobile'], restricted_viewer_tasks
         )
         self.__filter_restricted_viewer_tasks(
-            config['plugins']['desktop'], viewer_task_permissions
+            config['plugins']['desktop'], restricted_viewer_tasks
         )
 
         config['username'] = display_username or username
@@ -514,23 +517,21 @@ class QWC2Viewer:
             del items[removeIndex]
 
     def __filter_restricted_viewer_tasks(self, plugins,
-                                         viewer_task_permissions):
+                                         restricted_viewer_tasks):
         """Remove restricted viewer task items from menu and toolbar.
 
         :param list(obj) plugins: Plugins configurations
-        :param obj viewer_task_permissions: Viewer task permissions as
-                                            {<item key>: <permitted>}
+        :param obj restricted_viewer_tasks: Restricted viewer tasks
         """
-        for key in viewer_task_permissions:
-            if not viewer_task_permissions[key]:
-                plugins_to_remove = []
-                for plugin in plugins:
-                    if plugin.get("name") == key:
-                        plugins_to_remove.append(plugin)
-                    elif plugin.get("name") == "TaskButton" and \
-                        plugin.get("cfg", {}).get("task", "") + plugin.get("cfg").get('mode', "") == key:
-                        plugins_to_remove.append(plugin)
-
+        for key in restricted_viewer_tasks:
+            plugins_to_remove = []
+            for plugin in plugins:
+                if plugin.get("name") == key:
+                    plugins_to_remove.append(plugin)
+                elif plugin.get("name") == "TaskButton" and \
+                    plugin.get("cfg", {}).get("task", "") + plugin.get("cfg").get('mode', "") == key:
+                    plugins_to_remove.append(plugin)
+                else:
                     if 'menuItems' in plugin.get('cfg', {}):
                         self.__filter_config_items(
                             plugin['cfg']['menuItems'], key
@@ -539,8 +540,8 @@ class QWC2Viewer:
                         self.__filter_config_items(
                             plugin['cfg']['toolbarItems'], key
                         )
-                for plugin in plugins_to_remove:
-                    plugins.remove(plugin)
+            for plugin in plugins_to_remove:
+                plugins.remove(plugin)
 
     def __filter_config_items(self, items, key):
         """Remove items with key from menuItems and toolbarItems.
@@ -846,29 +847,6 @@ class QWC2Viewer:
 
         form =  ElementTree.tostring(form_document, encoding='utf8', method='xml')
         return Response(form, mimetype='text/xml')
-
-    def viewer_task_permissions(self, identity):
-        """Return permissions for viewer tasks.
-
-        :param obj identity: User identity
-        """
-        # get restricted viewer tasks
-        restricted_viewer_tasks = self.resources['qwc2_config']. \
-            get('restricted_viewer_tasks', [])
-
-        # get permitted viewer tasks
-        permitted_viewer_tasks = self.permissions_handler.resource_permissions(
-            'viewer_tasks', identity
-        )
-        # unique set
-        permitted_viewer_tasks = set(permitted_viewer_tasks)
-
-        # set permissions
-        viewer_tasks = {}
-        for viewer_task in restricted_viewer_tasks:
-            viewer_tasks[viewer_task] = viewer_task in permitted_viewer_tasks
-
-        return viewer_tasks
 
     def permitted_themes(self, identity, lang, permitted_theme_ids=[]):
         """Return qwc2_themes filtered by permissions.
