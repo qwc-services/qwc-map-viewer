@@ -458,7 +458,7 @@ requires-dist = [
     { name = "flask-jwt-extended", specifier = "~=4.6.0" },
     { name = "flask-restx", specifier = "~=1.3.0" },
     { name = "psycopg2", specifier = "~=2.9.9" },
-    { name = "qwc-services-core", specifier = "~=1.4.0" },
+    { name = "qwc-services-core", specifier = "~=1.5.0" },
     { name = "requests", specifier = "~=2.32.0" },
     { name = "sqlalchemy", specifier = "~=2.0.29" },
     { name = "werkzeug", specifier = "~=3.1.4" },
@@ -469,11 +469,11 @@ dev = [{ name = "python-dotenv", specifier = ">=1.0.1" }]
 
 [[package]]
 name = "qwc-services-core"
-version = "1.4.6"
+version = "1.5.0"
 source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/49/ea/6267afa47d87a7094338bee74891892547e0b6279032518af45a649855e6/qwc_services_core-1.4.6.tar.gz", hash = "sha256:4dbdda48a9ff68cfab6dadb1b15f04b8e61d04448299f67aa9eab5a0587d6dac", size = 17086, upload-time = "2025-04-03T09:34:57.624Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/5d/2a/b341328260fdacdcbde1f2d8ab3d6a6509b449ae74d884619afb2156f8e9/qwc_services_core-1.5.0.tar.gz", hash = "sha256:7c5d84b7b2c5ee5764cb2705f28ccba6b42f18123b7097527e26b2e060ebc906", size = 17541, upload-time = "2026-01-06T09:48:00.724Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/30/a0/809294f0ce5fe55b02cca342afbb72cdf31117a35847ca0c3c5f86a89d3e/qwc_services_core-1.4.6-py3-none-any.whl", hash = "sha256:60a61ada0e4f240982f5f44e10d864a44894b1a093db712a798c2a562fe84959", size = 17897, upload-time = "2025-04-03T09:34:56.462Z" },
+    { url = "https://files.pythonhosted.org/packages/41/13/4bb9a13ed6fbc37157ae23fe519d944c8a2503a9f2481956c269f93996bd/qwc_services_core-1.5.0-py3-none-any.whl", hash = "sha256:0c6ec5f911944b73e6b73dddff8b71bd51d650b180b3e3102c693ad4832c601c", size = 18306, upload-time = "2026-01-06T09:47:59.444Z" },
 ]
 
 [[package]]
