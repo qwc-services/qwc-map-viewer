@@ -570,8 +570,6 @@ class QWC2Viewer:
         # filter by permissions
         themes = self.permitted_themes(identity, lang)
 
-        self.__update_service_urls(themes)
-
         return jsonify({"themes": themes})
 
     def edit_config(self, identity, wms_name, layers):
@@ -595,25 +593,6 @@ class QWC2Viewer:
             if editConfig:
                 return editConfig
         return None
-
-    def __update_service_urls(self, themes):
-        for item in themes.get('items', []):
-            if not item.get('wms_name'):
-                continue
-            wms_name = item['wms_name']
-            item.update({
-                'url': "%s%s" % (self.ogc_service_url, wms_name),
-                'featureInfoUrl': "%s%s" % (self.info_service_url, wms_name),
-                'legendUrl': "%s%s?" % (self.legend_service_url, wms_name) + (
-                    item["extraLegendParameters"]
-                    if "extraLegendParameters" in item else "")
-            })
-            if item.get('print'):
-                # add print URL only if print templates available
-                item['printUrl'] = "%s%s" % (self.print_service_url, wms_name)
-
-        for subdir in themes.get('subdirs', []):
-            self.__update_service_urls(subdir)
 
     def qwc2_assets(self, path, identity, lang):
         """Return QWC2 asset from assets/ or temporary image dir.
@@ -996,12 +975,18 @@ class QWC2Viewer:
         :param str lang: The viewer language
         """
         # get permissions for WMS
+        wms_name = item['wms_name']
         wms_permissions = self.permissions_handler.resource_permissions(
-            'wms_services', identity, item['wms_name']
+            'wms_services', identity, wms_name
         )
         if not wms_permissions:
             # WMS not permitted
             return None
+
+        item['url'] = "%s%s" % (self.ogc_service_url, wms_name)
+        item['featureInfoUrl'] = "%s%s" % (self.info_service_url, wms_name)
+        item['legendUrl']: "%s%s?%s" % (self.legend_service_url, wms_name, item.get("extraLegendParameters", ""))
+        item['printUrl'] = "%s%s" % (self.print_service_url, wms_name)
 
         # combine permissions
         permitted_layers = set()
