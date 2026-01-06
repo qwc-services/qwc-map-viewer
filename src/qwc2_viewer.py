@@ -601,14 +601,13 @@ class QWC2Viewer:
         :param str path: Asset path
         :param str lang: Asset language
         """
-        restricted_viewer_assets = self.resources['qwc2_config'].get(
-            'restricted_viewer_assets', []
+        restricted_viewer_assets = self.permissions_handler.resource_restrictions(
+            'viewer_assets', identity
         )
-
-        # get permitted viewer assets
         permitted_viewer_assets = self.permissions_handler.resource_permissions(
             'viewer_assets', identity
         )
+
         path_is_restricted = next((x for x in restricted_viewer_assets if fnmatch.fnmatch(path, x)), None)
         path_is_permitted = next((x for x in permitted_viewer_assets if fnmatch.fnmatch(path, x)), None)
 
