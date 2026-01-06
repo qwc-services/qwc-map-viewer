@@ -126,40 +126,38 @@ class QWC2Viewer:
                 return redirect(urlunparse(urlparts))
 
         # check whether requested theme is restricted
-        if self.redirect_restricted_themes_to_auth:
+        if self.redirect_restricted_themes_to_auth and self.auth_service_url:
             theme = self.__theme_from_params(identity, params)
             if self.__theme_restricted(identity, theme):
-                if self.auth_service_url:
-                    # redirect to login on auth service
-                    login_params = urlencode({
-                        'url': request_url
-                    })
-                    redirect_url = urljoin(
-                        self.auth_service_url, "login?%s" % login_params
-                    )
-                    self.logger.debug(
-                        "Restricted theme '%s' requested, "
-                        "redirecting to auth service" % theme
-                    )
-                    return redirect(redirect_url)
+                # redirect to login on auth service
+                login_params = urlencode({
+                    'url': request_url
+                })
+                redirect_url = urljoin(
+                    self.auth_service_url, "login?%s" % login_params
+                )
+                self.logger.debug(
+                    "Restricted theme '%s' requested, "
+                    "redirecting to auth service" % theme
+                )
+                return redirect(redirect_url)
 
         # If there are no permitted themes, redirect to auth
-        if self.redirect_to_auth_if_no_permitted_themes:
+        if self.redirect_to_auth_if_no_permitted_themes and self.auth_service_url:
             permitted_theme_ids = []
             themes = self.permitted_themes(identity, None, permitted_theme_ids)
             if len(permitted_theme_ids) == 0:
-                if self.auth_service_url:
-                    # redirect to login on auth service
-                    login_params = urlencode({
-                        'url': request_url
-                    })
-                    redirect_url = urljoin(
-                        self.auth_service_url, "login?%s" % login_params
-                    )
-                    self.logger.debug(
-                        "No permitted themes, redirecting to auth service"
-                    )
-                    return redirect(redirect_url)
+                # redirect to login on auth service
+                login_params = urlencode({
+                    'url': request_url
+                })
+                redirect_url = urljoin(
+                    self.auth_service_url, "login?%s" % login_params
+                )
+                self.logger.debug(
+                    "No permitted themes, redirecting to auth service"
+                )
+                return redirect(redirect_url)
 
         # check if index file is present
         viewer_index_file = os.path.join(self.config_dir, 'index.html')
@@ -387,39 +385,20 @@ class QWC2Viewer:
     def __theme_from_params(self, identity, params):
         """Get requested theme from URL params.
 
-        NOTE: only resolve permalinks if redirect to login is enabled
-
         :param obj identity: User identity
         :param ImmutableMultiDict params: Request URL parameters
         """
         theme = params.get('t')
 
-        if 'k' not in params:
-            # no permalink param present
-            return theme
-        if not self.redirect_restricted_themes_to_auth:
-            # redirect is not enabled
-            return theme
-        if (
-            not self.permalink_service_url
-            or not self.internal_permalink_service_url
-        ):
-            # no permalink service present
-            return theme
-        if not self.auth_service_url:
-            # no auth service present
-            return False
-        if identity:
-            # skip if already signed in
+        if params.get('k') or not self.internal_permalink_service_url:
+            # no permalink param present or no permalink service configured
             return theme
 
         # resolve permalink and extract theme
         try:
             # resolve permalink
             url = urljoin(self.internal_permalink_service_url, 'resolvepermalink')
-            params = {
-                'key': params.get('k')
-            }
+            params = {'key': params['k']}
             self.logger.debug(
                 "Resolving permalink at %s?%s" % (url, urlencode(params))
             )
