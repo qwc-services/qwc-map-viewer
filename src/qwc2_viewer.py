@@ -43,70 +43,43 @@ class QWC2Viewer:
         self.logger = logger
 
         config_handler = RuntimeConfig("mapViewer", logger)
-        config = config_handler.tenant_config(tenant)
+        self.tenant_config = config_handler.tenant_config(tenant)
 
         # path to QWC2 files
-        self.qwc2_path = config.get('qwc2_path', 'qwc2/')
+        self.qwc2_path = self.tenant_config.get('qwc2_path', '/qwc2/')
 
-        # QWC service URLs for config.json
         self.auth_service_url = self.__sanitize_url(
-            config.get('auth_service_url'))
-        self.ccc_config_service_url = self.__sanitize_url(
-            config.get('ccc_config_service_url'))
-        self.data_service_url = self.__sanitize_url(
-            config.get('data_service_url'))
-        self.dataproduct_service_url = self.__sanitize_url(
-            config.get('dataproduct_service_url'))
-        self.document_service_url = self.__sanitize_url(
-            config.get('document_service_url',
-                       config.get('feature_report_service_url')))
-        self.elevation_service_url = self.__sanitize_url(
-            config.get('elevation_service_url'))
-        self.landreg_service_url = self.__sanitize_url(
-            config.get('landreg_service_url'))
-        self.mapinfo_service_url = self.__sanitize_url(
-            config.get('mapinfo_service_url'))
-        self.permalink_service_url = self.__sanitize_url(
-            config.get('permalink_service_url'))
-        self.plotinfo_service_url = self.__sanitize_url(
-            config.get('plotinfo_service_url'))
-        self.search_service_url = self.__sanitize_url(
-            config.get('search_service_url'))
-        self.search_data_service_url = self.__sanitize_url(
-            config.get('search_data_service_url'))
-        # QWC service URLs for themes.json
+            self.tenant_config.get('auth_service_url'))
+
+        # OGC service URLs for themes.json
         self.ogc_service_url = self.__sanitize_url(
-            config.get('ogc_service_url', 'http://localhost:5013/'))
+            self.tenant_config.get('ogc_service_url', '/ows'))
         self.info_service_url = self.__sanitize_url(
-            config.get('info_service_url', self.ogc_service_url))
+            self.tenant_config.get('info_service_url', self.ogc_service_url))
         self.legend_service_url = self.__sanitize_url(
-            config.get('legend_service_url', self.ogc_service_url))
+            self.tenant_config.get('legend_service_url', self.ogc_service_url))
         self.print_service_url = self.__sanitize_url(
-            config.get('print_service_url', self.ogc_service_url))
+            self.tenant_config.get('print_service_url', self.ogc_service_url))
+
         # internal QWC service URLs for internal usage
-        if self.permalink_service_url:
-            # set default if permalink service present
-            default_url = 'http://qwc-permalink-service:9090'
-        else:
-            default_url = None
         self.internal_permalink_service_url = self.__sanitize_url(
-            config.get('internal_permalink_service_url', default_url))
+            self.tenant_config.get('internal_permalink_service_url', 'http://qwc-permalink-service:9090'))
 
-        self.db_url = config.get('db_url', 'postgresql:///?service=qwc_configdb')
-        self.qwc_config_schema = config.get('qwc_config_schema', 'qwc_config')
+        self.db_url = self.tenant_config.get('db_url', 'postgresql:///?service=qwc_configdb')
+        self.qwc_config_schema = self.tenant_config.get('qwc_config_schema', 'qwc_config')
 
-        self.show_restricted_themes = config.get('show_restricted_themes', False)
-        self.show_restricted_themes_whitelist = config.get('show_restricted_themes_whitelist', "")
-        self.redirect_restricted_themes_to_auth = config.get(
+        self.show_restricted_themes = self.tenant_config.get('show_restricted_themes', False)
+        self.show_restricted_themes_whitelist = self.tenant_config.get('show_restricted_themes_whitelist', "")
+        self.redirect_restricted_themes_to_auth = self.tenant_config.get(
             'redirect_restricted_themes_to_auth', False
         )
-        self.redirect_to_auth_if_no_permitted_themes = config.get(
+        self.redirect_to_auth_if_no_permitted_themes = self.tenant_config.get(
             'redirect_to_auth_if_no_permitted_themes', False
         )
 
-        self.user_info_fields = config.get('user_info_fields', [])
-        self.display_user_info_field = config.get('display_user_info_field')
-        self.extra_csp_directives = config.get('extra_csp_directives')
+        self.user_info_fields = self.tenant_config.get('user_info_fields', [])
+        self.display_user_info_field = self.tenant_config.get('display_user_info_field')
+        self.extra_csp_directives = self.tenant_config.get('extra_csp_directives')
 
         # get config dir for tenant
         self.config_dir = os.path.dirname(
@@ -117,7 +90,7 @@ class QWC2Viewer:
         # NOTE: this dir will be cleaned up automatically on reload
         self.images_temp_dir = None
 
-        self.resources = self.load_resources(config)
+        self.resources = self.load_resources(self.tenant_config)
         self.permissions_handler = PermissionsReader(tenant, logger)
 
     def qwc2_index(self, identity, params, request_url):
@@ -238,32 +211,21 @@ class QWC2Viewer:
         ))
 
         # set QWC service URLs
-        if self.auth_service_url:
-            config['authServiceUrl'] = self.auth_service_url
-        if self.ccc_config_service_url:
-            config['cccConfigService'] = self.ccc_config_service_url
-        if self.data_service_url:
-            config['editServiceUrl'] = self.data_service_url
-        if self.dataproduct_service_url:
-            config['dataproductServiceUrl'] = self.dataproduct_service_url
-        if self.document_service_url:
-            config['documentServiceUrl'] = self.document_service_url
-        if self.elevation_service_url:
-            config['elevationServiceUrl'] = self.elevation_service_url
-        if self.landreg_service_url:
-            config['landRegisterService'] = self.landreg_service_url
-        if self.mapinfo_service_url:
-            config['mapInfoService'] = self.mapinfo_service_url
-        if self.permalink_service_url:
-            config['permalinkServiceUrl'] = self.permalink_service_url
-        if self.plotinfo_service_url:
-            config['plotInfoService'] = self.plotinfo_service_url
-        if self.proxy_service_url:
-            config['proxyServiceUrl'] = self.proxy_service_url
-        if self.search_service_url:
-            config['searchServiceUrl'] = self.search_service_url
-        if self.search_data_service_url:
-            config['searchDataServiceUrl'] = self.search_data_service_url
+        def set_service_url(key, tenant_config_key):
+            config[key] = self.__sanitize_url(self.tenant_config.get(tenant_config_key, config.get('key')))
+
+        set_service_url('authServiceUrl', 'auth_service_url')
+        set_service_url('cccConfigService', 'ccc_config_service_url')
+        set_service_url('dataproductServiceUrl', 'dataproduct_service_url')
+        set_service_url('documentServiceUrl', 'document_service_url')
+        set_service_url('editServiceUrl', 'data_service_url')
+        set_service_url('elevationServiceUrl', 'elevation_service_url')
+        set_service_url('landRegisterService', 'landreg_service_url')
+        set_service_url('mapInfoService', 'mapinfo_service_url')
+        set_service_url('permalinkServiceUrl', 'permalink_service_url')
+        set_service_url('plotInfoService', 'plotinfo_service_url')
+        set_service_url('searchServiceUrl', 'search_service_url')
+        set_service_url('searchDataServiceUrl', 'search_data_service_url')
 
         config['wmsDpi'] = os.environ.get(
             'WMS_DPI', config.get('wmsDpi', '96'))
