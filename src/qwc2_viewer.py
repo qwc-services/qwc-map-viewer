@@ -1485,16 +1485,21 @@ class QWC2Viewer:
         :param obj identity: User identity
         :param list permitted_oblique_datasets: permitted oblique image tilesets
         """
-        # If wildcard permission is set, don't filter as they are all permitted
-        permitted_oblique_datasets = self.permissions_handler.resource_permissions(
-            'oblique_image_datasets', identity
-        )
-        if '*' in permitted_oblique_datasets:
-            return
-
         if 'obliqueDatasets' in item:
-            # filter theme obliqueDatasets by permissions
-            item['obliqueDatasets'] = [
-                entry for entry in item['obliqueDatasets']
-                if entry['dataset'] in permitted_oblique_datasets
-            ]
+            restricted_oblique_datasets = self.permissions_handler.resource_restrictions(
+                'oblique_image_datasets', identity
+            )
+            permitted_oblique_datasets = self.permissions_handler.resource_permissions(
+                'oblique_image_datasets', identity
+            )
+            if self.permissions_handler.permissions_default_allow():
+                item['obliqueDatasets'] = [
+                    entry for entry in item['obliqueDatasets']
+                    if entry['dataset'] not in restricted_oblique_datasets
+                ]
+
+            elif '*' not in permitted_oblique_datasets:
+                item['obliqueDatasets'] = [
+                    entry for entry in item['obliqueDatasets']
+                    if entry['dataset'] in permitted_oblique_datasets
+                ]
