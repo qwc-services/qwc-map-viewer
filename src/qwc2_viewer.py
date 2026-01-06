@@ -978,6 +978,10 @@ class QWC2Viewer:
                 permission.get('print_templates', [])
             )
 
+        restricted_3d_tilesets = self.permissions_handler.resource_restrictions(
+            'wms_services', identity, [(wms_name, 'tilesets_3d')]
+        )
+
         # filter by permissions
         self.filter_restricted_layers(item, permitted_layers)
         self.filter_visibility_presets(item, permitted_layers)
@@ -989,7 +993,7 @@ class QWC2Viewer:
         self.filter_item_theme_info_links(item, identity)
         self.filter_item_plugin_data(item, identity)
         self.filter_item_snapping_config(item, identity, permitted_layers)
-        self.filter_item_3d_tilesets(item, identity, permission.get('tilesets_3d', []))
+        self.filter_item_3d_tilesets(item, identity, permission.get('tilesets_3d', []), restricted_3d_tilesets)
         self.filter_item_oblique_image_datasets(item, identity)
         if lang in item.get('translations', []):
             item['translations'] = item['translations'][lang]
@@ -1451,23 +1455,28 @@ class QWC2Viewer:
                 filter(lambda entry: entry['name'] in permitted_layers, item['snapping']['snaplayers'])
             )
 
-    def filter_item_3d_tilesets(self, item, identity, permitted_3d_tilesets):
+    def filter_item_3d_tilesets(self, item, identity, permitted_3d_tilesets, restricted_3d_tilesets):
         """Filter theme item 3d tilesets by permissions.
 
         :param obj item: Theme item
         :param obj identity: User identity
         :param list permitted_3d_tilesets: permitted 3D tilesets
+        :param list restricted_3d_tilesets: restricted 3D tilesets
         """
-        # If wildcard permission is set, don't filter as they are all permitted
-        if '*' in permitted_3d_tilesets:
-            return
 
+        # If wildcard permission is set, don't filter as they are all permitted
         if 'map3d' in item:
-            # filter theme 3d tilesets by permissions
-            item['map3d']['tiles3d'] = [
-                entry for entry in item['map3d'].get('tiles3d', [])
-                if entry['name'] in permitted_3d_tilesets
-            ]
+            if self.permissions_handler.permissions_default_allow():
+                item['map3d']['tiles3d'] = [
+                    entry for entry in item['map3d'].get('tiles3d', [])
+                    if entry['name'] not in restricted_3d_tilesets
+                ]
+
+            elif '*' not in permitted_oblique_datasets:
+                item['map3d']['tiles3d'] = [
+                    entry for entry in item['map3d'].get('tiles3d', [])
+                    if entry['name'] in permitted_3d_tilesets
+                ]
 
     def filter_item_oblique_image_datasets(self, item, identity):
         """Filter theme item 3d tilesets by permissions.
