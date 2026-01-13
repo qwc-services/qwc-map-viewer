@@ -210,7 +210,7 @@ class QWC2Viewer:
 
         # set QWC service URLs
         def set_service_url(key, tenant_config_key):
-            config[key] = self.__sanitize_url(self.tenant_config.get(tenant_config_key, config.get('key')))
+            config[key] = self.__sanitize_url(self.tenant_config.get(tenant_config_key, config.get(key)))
 
         set_service_url('authServiceUrl', 'auth_service_url')
         set_service_url('cccConfigService', 'ccc_config_service_url')
