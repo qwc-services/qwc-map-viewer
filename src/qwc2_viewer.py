@@ -962,7 +962,7 @@ class QWC2Viewer:
 
         item['url'] = "%s%s" % (self.ogc_service_url, wms_name)
         item['featureInfoUrl'] = "%s%s" % (self.info_service_url, wms_name)
-        item['legendUrl']: "%s%s?%s" % (self.legend_service_url, wms_name, item.get("extraLegendParameters", ""))
+        item['legendUrl'] = "%s%s?%s" % (self.legend_service_url, wms_name, item.get("extraLegendParameters", ""))
         item['printUrl'] = "%s%s" % (self.print_service_url, wms_name)
 
         # combine permissions
