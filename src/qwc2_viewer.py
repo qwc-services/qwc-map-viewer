@@ -585,12 +585,14 @@ class QWC2Viewer:
         for theme in themes.get('items', []):
             if theme.get('wms_name') == wms_name:
                 editConfig = theme.get('editConfig', {})
+                if not layers:
+                    return editConfig
                 return dict([
                     (layer, editConfig[layer]) for layer in layers if layer in editConfig
                 ])
 
         for subdir in themes.get('subdirs', []):
-            editConfig = self.__search_edit_config(subdir, wms_name, layer)
+            editConfig = self.__search_edit_config(subdir, wms_name, layers)
             if editConfig:
                 return editConfig
         return None
