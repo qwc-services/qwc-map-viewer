@@ -577,14 +577,19 @@ class QWC2Viewer:
         self.logger.debug('Getting %s.{%s} editConfig for identity: %s', wms_name, ",".join(layers), identity)
 
         # filter by permissions
-        themes = self.permitted_themes(identity, None)
-        editConfig = self.__search_edit_config(themes, wms_name, layers)
+        themes = json.loads(json.dumps(self.resources['qwc2_themes']))
+        editConfig = self.__search_edit_config(themes, wms_name, layers, identity)
+
         return jsonify(editConfig or {})
 
-    def __search_edit_config(self, themes, wms_name, layers):
-        for theme in themes.get('items', []):
-            if theme.get('wms_name') == wms_name:
-                editConfig = theme.get('editConfig', {})
+    def __search_edit_config(self, themes, wms_name, layers, identity):
+        for item in themes.get('items', []):
+            wms_permissions = self.permissions_handler.resource_permissions(
+                'wms_services', identity, item['wms_name']
+            )
+            if wms_permissions and item['wms_name'] == wms_name:
+                self.filter_edit_config(item, identity)
+                editConfig = item.get('editConfig', {})
                 if not layers:
                     return editConfig
                 return dict([
@@ -592,7 +597,7 @@ class QWC2Viewer:
                 ])
 
         for subdir in themes.get('subdirs', []):
-            editConfig = self.__search_edit_config(subdir, wms_name, layers)
+            editConfig = self.__search_edit_config(subdir, wms_name, layers, identity)
             if editConfig:
                 return editConfig
         return None
