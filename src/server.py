@@ -98,7 +98,7 @@ def qwc2_themes():
     lang = request.args.get('lang', None)
     return with_no_cache_headers(qwc2_viewer.qwc2_themes(get_identity(), lang))
 
-@app.route('/editConfig.json')
+@app.route('/editConfig.json', endpoint="editConfig")
 @optional_auth
 # map: Map id
 # layer: Layer name

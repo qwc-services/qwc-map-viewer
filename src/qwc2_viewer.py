@@ -8,7 +8,7 @@ from urllib.parse import urlparse, urlunparse, urlencode, urljoin, parse_qsl
 from xml.etree import ElementTree
 from sqlalchemy.sql import text as sql_text
 
-from flask import abort, json, jsonify, redirect, send_from_directory, Response
+from flask import abort, json, jsonify, redirect, send_from_directory, Response, url_for
 from flask_jwt_extended import get_jwt
 
 from qwc_services_core.database import DatabaseEngine
@@ -993,7 +993,6 @@ class QWC2Viewer:
         self.filter_restricted_layers(item, permitted_layers)
         self.filter_visibility_presets(item, permitted_layers)
         self.filter_print_templates(item, permitted_print_templates)
-        self.filter_edit_config(item, identity)
         self.filter_item_background_layers(item, identity)
         self.filter_item_search_providers(item, identity)
         self.filter_item_external_layers(item, permitted_layers)
@@ -1002,10 +1001,20 @@ class QWC2Viewer:
         self.filter_item_snapping_config(item, identity, permitted_layers)
         self.filter_item_3d_tilesets(item, identity, permission.get('tilesets_3d', []), restricted_3d_tilesets)
         self.filter_item_oblique_image_datasets(item, identity)
+
         if lang in item.get('translations', []):
-            item['translations'] = item['translations'][lang]
+            # Translate theme title immediately so that theme switcher displays translated titles
+            item['title'] = item['translations'][lang].get('theme', {}).get('title', item['title'])
+            item['translationsUrl'] = item['url'] + "?SERVICE=GetTranslations&LANG=" + lang
+            del item['translations']
+            # item['translations'] = item['translations'][lang]
         else:
             item['translations'] = {}
+
+        # self.filter_edit_config(item, identity)
+        if item.get('editConfig'):
+            del item['editConfig']
+            item['editConfigUrl'] = url_for('editConfig') + "?map=" + item['wms_name'] + "&layers="
 
         return item
 
