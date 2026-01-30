@@ -589,12 +589,22 @@ class QWC2Viewer:
             )
             if wms_permissions and item['wms_name'] == wms_name:
                 self.filter_edit_config(item, identity)
-                editConfig = item.get('editConfig', {})
+                fullEditConfig = item.get('editConfig', {})
                 if not layers:
-                    return editConfig
-                return dict([
-                    (layer, editConfig[layer]) for layer in layers if layer in editConfig
+                    return fullEditConfig
+                editConfig = dict([
+                    (layer, fullEditConfig[layer]) for layer in layers if layer in fullEditConfig
                 ])
+                while True:
+                    # Recursively collect referenced editConfigs
+                    reltables = []
+                    for config in editConfig.values():
+                        reltables += [table for table in config.get('reltables', []) if table not in editConfig]
+                    for table in reltables:
+                        editConfig[table] = fullEditConfig[table]
+                    else:
+                        break
+                return editConfig
 
         for subdir in themes.get('subdirs', []):
             editConfig = self.__search_edit_config(subdir, wms_name, layers, identity)
