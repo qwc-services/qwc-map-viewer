@@ -595,13 +595,17 @@ class QWC2Viewer:
                 editConfig = dict([
                     (layer, fullEditConfig[layer]) for layer in layers if layer in fullEditConfig
                 ])
+                missingconfigs = []
                 while True:
                     # Recursively collect referenced editConfigs
                     reltables = []
                     for config in editConfig.values():
-                        reltables += [table for table in config.get('reltables', []) if table not in editConfig]
+                        reltables += [table for table in config.get('reltables', []) if table not in editConfig and table not in missingconfigs]
                     for table in reltables:
-                        editConfig[table] = fullEditConfig[table]
+                        if table in fullEditConfig:
+                            editConfig[table] = fullEditConfig[table]
+                        else:
+                            missingconfigs.append(table)
                     else:
                         break
                 return editConfig
