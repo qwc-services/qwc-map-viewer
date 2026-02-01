@@ -8,7 +8,7 @@ from urllib.parse import urlparse, urlunparse, urlencode, urljoin, parse_qsl
 from xml.etree import ElementTree
 from sqlalchemy.sql import text as sql_text
 
-from flask import abort, json, jsonify, redirect, send_from_directory, Response, url_for
+from flask import abort, json, jsonify, redirect, send_from_directory, Response, url_for, make_response
 from flask_jwt_extended import get_jwt
 
 from qwc_services_core.database import DatabaseEngine
@@ -189,12 +189,14 @@ class QWC2Viewer:
                 csp[parts[0]] = (csp.get(parts[0], "") + " " + parts[1]).strip()
 
         csp = "; ".join(list(map(lambda t: " ".join(t), csp.items()))) + ";"
-        viewer_index = viewer_index.replace('<head>', '<head>\n<meta http-equiv="Content-Security-Policy" content="%s">' % csp)
         viewer_index = viewer_index.replace('<script ', '<script nonce="%s" ' % nonce)
         viewer_index = viewer_index.replace('<script>', '<script nonce="%s">' % nonce)
         viewer_index = viewer_index.replace('</head>', '<script nonce="%s">window.__CSP_NONCE__ = "%s";</script>\n</head>' % (nonce, nonce))
 
-        return viewer_index
+        response = make_response(viewer_index)
+        response.headers['Content-Security-Policy'] = csp
+
+        return response
 
     def qwc2_config(self, identity, params):
         """Return QWC2 config.json for user.
