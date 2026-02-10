@@ -1018,9 +1018,19 @@ class QWC2Viewer:
         self.filter_item_3d_tilesets(item, identity, permission.get('tilesets_3d', []), restricted_3d_tilesets)
         self.filter_item_oblique_image_datasets(item, identity)
 
-        if lang in item.get('translations', []):
-            # Translate theme title immediately so that theme switcher displays translated titles
-            item['title'] = item['translations'][lang].get('theme', {}).get('title', item['title'])
+        if lang in item.get('translations', {}):
+            translations = item['translations'][lang]
+            # Apply translations to theme title, layers, print layouts immediately
+            def apply_translations(item, layertreetranslations):
+                for sublayer in item.get('sublayers', []):
+                    sublayer['title'] = layertreetranslations.get(sublayer['name'], sublayer['title'])
+                    apply_translations(sublayer, layertreetranslations)
+            apply_translations(item, translations.get('layertree', {}))
+
+            item['title'] = translations.get('theme', {}).get('title', item['title'])
+            for layout in item.get('print', []):
+                layout['title'] = translations.get('layouts', {}).get(layout['name'], layout['title'])
+
             item['translationsUrl'] = item['url'] + "?SERVICE=GetTranslations&LANG=" + lang
             del item['translations']
             # item['translations'] = item['translations'][lang]
