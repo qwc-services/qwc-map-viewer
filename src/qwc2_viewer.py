@@ -1001,9 +1001,10 @@ class QWC2Viewer:
                 permission.get('print_templates', [])
             )
 
-        restricted_3d_tilesets = self.permissions_handler.resource_restrictions(
-            'wms_services', identity, [(wms_name, 'tilesets_3d')]
+        restricted_3d_objects = self.permissions_handler.resource_restrictions(
+            'wms_services', identity, [(wms_name, 'objects_3d')]
         )
+        permitted_3d_objects = permission.get('objects_3d', [])
 
         # filter by permissions
         self.filter_restricted_layers(item, permitted_layers)
@@ -1015,7 +1016,7 @@ class QWC2Viewer:
         self.filter_item_theme_info_links(item, identity)
         self.filter_item_plugin_data(item, identity)
         self.filter_item_snapping_config(item, identity, permitted_layers)
-        self.filter_item_3d_tilesets(item, identity, permission.get('tilesets_3d', []), restricted_3d_tilesets)
+        self.filter_item_3d_objects(item, identity, permitted_3d_objects, restricted_3d_objects)
         self.filter_item_oblique_image_datasets(item, identity)
 
         if lang in item.get('translations', {}):
@@ -1497,27 +1498,56 @@ class QWC2Viewer:
                 filter(lambda entry: entry['name'] in permitted_layers, item['snapping']['snaplayers'])
             )
 
-    def filter_item_3d_tilesets(self, item, identity, permitted_3d_tilesets, restricted_3d_tilesets):
+    def filter_item_3d_objects(self, item, identity, permitted_3d_objects, restricted_3d_objects):
         """Filter theme item 3d tilesets by permissions.
 
         :param obj item: Theme item
         :param obj identity: User identity
-        :param list permitted_3d_tilesets: permitted 3D tilesets
-        :param list restricted_3d_tilesets: restricted 3D tilesets
+        :param list permitted_3d_objects: permitted 3D objects
+        :param list restricted_3d_objects: restricted 3D objects
         """
 
         # If wildcard permission is set, don't filter as they are all permitted
         if 'map3d' in item:
             if self.permissions_handler.permissions_default_allow():
-                item['map3d']['tiles3d'] = [
-                    entry for entry in item['map3d'].get('tiles3d', [])
-                    if entry['name'] not in restricted_3d_tilesets
+                if 'tiles3d' in item['map3d']:
+                    # NOTE: legacy format
+                    item['map3d']['tiles3d'] = [
+                        entry for entry in item['map3d']['tiles3d']
+                        if entry['name'] not in restricted_3d_objects
+                    ]
+
+                def filter_group(entry):
+                    if 'items' in entry:
+                        return entry | {'items': [
+                            filter_group(entry) for entry in entry['items']
+                            if entry.get('name') not in restricted_3d_objects
+                        ]}
+                    else:
+                        return entry
+                item['map3d']['objects'] = [
+                    filter_group(entry) for entry in item['map3d'].get('objects', [])
+                    if entry.get('name') not in restricted_3d_objects
                 ]
 
-            elif '*' not in permitted_oblique_datasets:
-                item['map3d']['tiles3d'] = [
-                    entry for entry in item['map3d'].get('tiles3d', [])
-                    if entry['name'] in permitted_3d_tilesets
+            elif '*' not in permitted_3d_objects:
+                if 'tiles3d' in item['map3d']:
+                    # NOTE: legacy format
+                    item['map3d']['tiles3d'] = [
+                        entry for entry in item['map3d']['tiles3d']
+                        if entry['name'] in permitted_3d_objects
+                    ]
+                def filter_group(entry):
+                    if 'items' in entry:
+                        return entry | {'items': [
+                            filter_group(entry) for entry in entry['items']
+                            if entry.get('name') in permitted_3d_objects
+                        ]}
+                    else:
+                        return entry
+                item['map3d']['objects'] = [
+                    filter_group(entry) for entry in item['map3d'].get('objects', [])
+                    if entry.get('name') in permitted_3d_objects
                 ]
 
     def filter_item_oblique_image_datasets(self, item, identity):
