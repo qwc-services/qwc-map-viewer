@@ -576,7 +576,10 @@ class QWC2Viewer:
         return jsonify({"themes": themes})
 
     def edit_config(self, identity, wms_name, layers):
-        self.logger.debug('Getting %s.{%s} editConfig for identity: %s', wms_name, ",".join(layers), identity)
+        if layers is not None:
+            self.logger.debug('Getting %s.{%s} editConfig for identity: %s', wms_name, ",".join(layers), identity)
+        else:
+            self.logger.debug('Getting all %s editConfigs for identity: %s', wms_name, identity)
 
         # filter by permissions
         themes = json.loads(json.dumps(self.resources['qwc2_themes']))
@@ -592,7 +595,7 @@ class QWC2Viewer:
             if wms_permissions and item['wms_name'] == wms_name:
                 self.filter_edit_config(item, identity)
                 fullEditConfig = item.get('editConfig', {})
-                if not layers:
+                if layers is None:
                     return fullEditConfig
                 editConfig = dict([
                     (layer, fullEditConfig[layer]) for layer in layers if layer in fullEditConfig

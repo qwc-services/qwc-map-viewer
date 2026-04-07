@@ -105,8 +105,12 @@ def qwc2_themes():
 def edit_config():
     qwc2_viewer = qwc2_viewer_handler()
     wms_name = request.args.get('map', None)
-    layers = list(filter(bool, request.args.get('layers', "").split(",")))
-    return with_no_cache_headers(qwc2_viewer.edit_config(get_identity(), wms_name, layers))
+    layers = request.args.get('layers', None)
+    if layers is not None:
+        edit_config = qwc2_viewer.edit_config(get_identity(), wms_name, list(filter(bool, layers.split(","))))
+    else:
+        edit_config = qwc2_viewer.edit_config(get_identity(), wms_name, None)
+    return with_no_cache_headers(edit_config)
 
 
 @app.route('/assets/<path:path>')
