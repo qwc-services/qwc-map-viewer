@@ -606,13 +606,13 @@ class QWC2Viewer:
                     reltables = []
                     for config in editConfig.values():
                         reltables += [table for table in config.get('reltables', []) if table not in editConfig and table not in missingconfigs]
+                    if not reltables:
+                        break
                     for table in reltables:
                         if table in fullEditConfig:
                             editConfig[table] = fullEditConfig[table]
                         else:
                             missingconfigs.append(table)
-                    else:
-                        break
                 return editConfig
 
         for subdir in themes.get('subdirs', []):
