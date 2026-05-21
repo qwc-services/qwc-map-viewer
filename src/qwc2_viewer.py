@@ -104,6 +104,7 @@ class QWC2Viewer:
         # if params are empty, check if there are default params
         # configured in user_info_fields, and redirect if that is the case
         if not params.get('t') and not params.get('k') and not params.get('bk') \
+            and not params.get('vp') \
             and isinstance(identity, dict) and self.db_url \
         :
             db = db_engine.db_engine(self.db_url)
