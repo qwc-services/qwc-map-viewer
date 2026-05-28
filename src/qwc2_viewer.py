@@ -914,6 +914,13 @@ class QWC2Viewer:
         # filter unused plugin data
         self.filter_plugin_data(themes)
 
+        # Set default theme
+        default_themes = sorted(self.permissions_handler.resource_permissions(
+            'default_theme', identity
+        ), key=lambda item: item['priority'], reverse=True)
+        if default_themes:
+            themes['defaultTheme'] = default_themes[0]['name']
+
         return themes
 
     def permitted_theme_group(self, theme_group, identity, lang, permitted_theme_ids):
