@@ -111,6 +111,10 @@
             "type": "string"
           }
         },
+        "flag_themes_with_restricted_content": {
+          "description": "Whether flag themes which are permitted but have restricted content.",
+          "type": "boolean"
+        },
         "redirect_restricted_themes_to_auth": {
           "description": "Whether to redirect to login on auth service if requesting a restricted theme in URL params",
           "type": "boolean"

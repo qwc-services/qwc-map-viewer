@@ -76,6 +76,7 @@ class QWC2Viewer:
         self.redirect_to_auth_if_no_permitted_themes = self.tenant_config.get(
             'redirect_to_auth_if_no_permitted_themes', False
         )
+        self.flag_themes_with_restricted_content = self.tenant_config.get('flag_themes_with_restricted_content', False)
 
         self.user_info_fields = self.tenant_config.get('user_info_fields', [])
         self.display_user_info_field = self.tenant_config.get('display_user_info_field')
@@ -998,6 +999,7 @@ class QWC2Viewer:
         item['featureInfoUrl'] = "%s%s" % (self.info_service_url, wms_name)
         item['legendUrl'] = "%s%s?%s" % (self.legend_service_url, wms_name, item.get("extraLegendParameters", ""))
         item['printUrl'] = "%s%s" % (self.print_service_url, wms_name)
+        hasRestrictedContent = False
 
         # combine permissions
         permitted_layers = set()
@@ -1018,7 +1020,7 @@ class QWC2Viewer:
         permitted_3d_objects = permission.get('objects_3d', [])
 
         # filter by permissions
-        self.filter_restricted_layers(item, permitted_layers)
+        hasRestrictedContent |= self.filter_restricted_layers(item, permitted_layers)
         self.filter_visibility_presets(item, permitted_layers)
         self.filter_print_templates(item, permitted_print_templates)
         self.filter_item_background_layers(item, identity)
@@ -1054,6 +1056,9 @@ class QWC2Viewer:
             del item['editConfig']
             item['editConfigUrl'] = url_for('editConfig') + "?map=" + item['wms_name'] + "&layers="
 
+        if self.flag_themes_with_restricted_content:
+            item['hasRestrictedContent'] = hasRestrictedContent
+
         return item
 
     def filter_restricted_layers(self, layer, permitted_layers):
@@ -1062,6 +1067,7 @@ class QWC2Viewer:
         :param obj layer: Layer or group layer
         :param set permitted_layers: List of permitted layers
         """
+        hasRestricted = False
         if layer.get('sublayers'):
             # group layer
             # collect permitted sub layers
@@ -1070,10 +1076,13 @@ class QWC2Viewer:
                 # check permissions
                 if sublayer['name'] in permitted_layers:
                     # recursively filter sub layer
-                    self.filter_restricted_layers(sublayer, permitted_layers)
+                    hasRestricted |= self.filter_restricted_layers(sublayer, permitted_layers)
                     sublayers.append(sublayer)
+                else:
+                    hasRestricted = True
 
             layer['sublayers'] = sublayers
+        return hasRestricted
 
     def filter_visibility_presets(self, item, permitted_layers):
         """Filter visibility presets by permissions.
