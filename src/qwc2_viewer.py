@@ -607,7 +607,9 @@ class QWC2Viewer:
                     # Recursively collect referenced editConfigs
                     reltables = []
                     for config in editConfig.values():
-                        reltables += [table for table in config.get('reltables', []) if table not in editConfig and table not in missingconfigs]
+                        getLayerName = lambda entry: entry['layerName'] if isinstance(entry, dict) else entry
+                        reltablenames = [getLayerName(entry) for entry in config.get('reltables', [])]
+                        reltables += [table for table in reltablenames if table not in editConfig and table not in missingconfigs]
                     if not reltables:
                         break
                     for table in reltables:
