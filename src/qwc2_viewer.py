@@ -217,6 +217,10 @@ class QWC2Viewer:
             config[key] = self.__sanitize_url(self.tenant_config.get(tenant_config_key, config.get(key)))
 
         set_service_url('authServiceUrl', 'auth_service_url')
+        # Honour auth_service_url from JWT if set
+        if identity and identity.get('auth_service_url'):
+            self.logger.debug("Setting authServiceUrl from 'auth_service_url' in set in identity")
+            config["authServiceUrl"] = self.__sanitize_url(identity.get('auth_service_url'))
         set_service_url('cccConfigService', 'ccc_config_service_url')
         set_service_url('dataproductServiceUrl', 'dataproduct_service_url')
         set_service_url('documentServiceUrl', 'document_service_url')
