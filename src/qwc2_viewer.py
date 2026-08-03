@@ -1059,8 +1059,18 @@ class QWC2Viewer:
 
         # self.filter_edit_config(item, identity)
         if item.get('editConfig'):
+            # Collect layer names for toplevel geometryless datasets which are not referenced in reltablenames
+            nogeom_layer_names = set([layername for layername in item['editConfig'] if item['editConfig'][layername]['geomType'] is None])
+            getLayerName = lambda entry: entry['layerName'] if isinstance(entry, dict) else entry
+            for key, config in item['editConfig'].items():
+                nogeom_layer_names = nogeom_layer_names.difference([getLayerName(entry) for entry in config.get('reltables', [])])
+            nogeom_layer_names = ",".join(nogeom_layer_names)
+            if nogeom_layer_names:
+                nogeom_layer_names += ","
+
             del item['editConfig']
-            item['editConfigUrl'] = url_for('editConfig') + "?map=" + item['wms_name'] + "&layers="
+
+            item['editConfigUrl'] = url_for('editConfig') + "?map=" + item['wms_name'] + "&layers=" + nogeom_layer_names
 
         if self.flag_themes_with_restricted_content:
             item['hasRestrictedContent'] = hasRestrictedContent
