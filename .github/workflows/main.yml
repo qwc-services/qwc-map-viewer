@@ -1,8 +1,15 @@
-name: build
+name: Run tests and build
 
-on: [push]
+on:
+  pull_request:
+  push:
+    branches:
+      - '**'
+    tags:
+      - 'v*'
 
 jobs:
+
     test:
       runs-on: ubuntu-latest
       steps:
@@ -10,7 +17,7 @@ jobs:
       - uses: actions/checkout@master
 
       - name: Setting up python 3.12
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v7
         with:
             python-version: '3.12'
 
@@ -20,8 +27,9 @@ jobs:
           check-jsonschema --check-metaschema schemas/qwc-map-viewer.json
 
     build:
+      if: github.ref_type == 'tag'
+      needs: test
       runs-on: ubuntu-latest
-      if: github.event_name == 'push' && contains(github.ref, 'refs/tags/')
       steps:
 
       - uses: actions/checkout@master
@@ -32,25 +40,29 @@ jobs:
           if [ ${{ endsWith(github.ref, '-lts') }} = true ]; then
             echo "tag=latest-lts,latest-${GITHUB_REF:11:4}-lts,${GITHUB_REF:10}" >>$GITHUB_OUTPUT
             echo "bundle_version=${GITHUB_REF:10:5}.0.${GITHUB_REF:16}" >>$GITHUB_OUTPUT
+            echo "base_tag=latest-${GITHUB_REF:11:4}-lts" >>$GITHUB_OUTPUT
           else
             echo "tag=latest,${GITHUB_REF:10}" >>$GITHUB_OUTPUT
             echo "bundle_version=${GITHUB_REF:10}" >>$GITHUB_OUTPUT
+            echo "base_tag=latest" >>$GITHUB_OUTPUT
           fi
           echo "app_version=${GITHUB_REF:10}" >>$GITHUB_OUTPUT
 
       - name: Build and publish base image
         uses: elgohr/Publish-Docker-Github-Action@v5
-        if: github.event_name != 'pull_request'
+        env:
+          BASE_TAG: ${{ steps.get_tag.outputs.base_tag }}
         with:
           name: sourcepole/qwc-map-viewer-base
           username: ${{ secrets.DOCKER_HUB_USER }}
           password: ${{ secrets.DOCKER_HUB_PASSWORD }}
           tags: "${{ steps.get_tag.outputs.tag }}"
+          buildargs: BASE_TAG
 
       - name: Build and publish stock image
         uses: elgohr/Publish-Docker-Github-Action@v5
-        if: github.event_name != 'pull_request'
         env:
+          BASE_TAG: ${{ steps.get_tag.outputs.base_tag }}
           QWC2_URL: https://github.com/qgis/qwc2/releases/download/${{ steps.get_tag.outputs.bundle_version }}/qwc2-stock-app.zip
           BASE_IMAGE_VERSION: ${{ steps.get_tag.outputs.app_version }}
         with:
@@ -59,4 +71,4 @@ jobs:
           password: ${{ secrets.DOCKER_HUB_PASSWORD }}
           tags: "${{ steps.get_tag.outputs.tag }}"
           dockerfile: Dockerfile-qwc2-app
-          buildargs: QWC2_URL,BASE_IMAGE_VERSION
+          buildargs: BASE_TAG,QWC2_URL,BASE_IMAGE_VERSION
