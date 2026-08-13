@@ -313,6 +313,9 @@ class QWC2Viewer:
 
         config['username'] = display_username or username
         config['tenant'] = self.tenant
+        config['capabilities'] = self.permissions_handler.resource_permissions(
+            'capabilities', identity
+        )
         config['user_infos'] = user_infos
 
         return jsonify(config)
