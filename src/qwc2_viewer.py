@@ -1191,6 +1191,7 @@ class QWC2Viewer:
         creatable = False
         updatable = False
         deletable = False
+        geomreadonly = True
 
         for permission in dataset_permissions:
             # collect permitted attributes
@@ -1201,6 +1202,7 @@ class QWC2Viewer:
             creatable |= permission.get('creatable', False)
             updatable |= permission.get('updatable', False)
             deletable |= permission.get('deletable', False)
+            geomreadonly &= permission.get('geomreadonly', False)
 
         # make writable consistent with CRUD actions
         writable |= creatable and updatable and deletable
@@ -1220,7 +1222,8 @@ class QWC2Viewer:
         config['permissions'] = {
             'creatable': creatable,
             'updatable': updatable,
-            'deletable': deletable
+            'deletable': deletable,
+            'geomreadonly': geomreadonly
         }
 
         return config
