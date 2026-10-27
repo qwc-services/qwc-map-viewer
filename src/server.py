@@ -1,13 +1,12 @@
 import logging
 import os
-import requests
 import urllib.parse
 
-from flask import json, Flask, request, jsonify, redirect
-
-from qwc_services_core.auth import auth_manager, optional_auth, get_identity
-from qwc_services_core.tenant_handler import TenantHandler, TenantPrefixMiddleware, TenantSessionInterface
+from flask import Flask, jsonify, redirect, request
+from qwc_services_core.auth import auth_manager, get_identity, optional_auth
 from qwc_services_core.runtime_config import RuntimeConfig
+from qwc_services_core.tenant_handler import TenantHandler, TenantPrefixMiddleware, TenantSessionInterface
+
 from qwc2_viewer import QWC2Viewer
 
 # Flask application
@@ -72,7 +71,7 @@ def assert_user_is_logged():
         if identity is None:
             app.logger.info("Access denied, authentication required")
             prefix = auth_path_prefix().rstrip('/')
-            return redirect(prefix + '/login?url=%s' % urllib.parse.quote(request.url))
+            return redirect(prefix + f'/login?url={urllib.parse.quote(request.url)}')
 
 
 # routes

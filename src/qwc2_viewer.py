@@ -1,20 +1,18 @@
 import base64
 import fnmatch
 import os
-import requests
 import secrets
 import tempfile
-from urllib.parse import urlparse, urlunparse, urlencode, urljoin, parse_qsl
+from urllib.parse import parse_qsl, urlencode, urljoin, urlparse, urlunparse
 from xml.etree import ElementTree
-from sqlalchemy.sql import text as sql_text
 
-from flask import abort, json, jsonify, redirect, send_from_directory, Response, url_for, make_response
+import requests
+from flask import Response, abort, json, jsonify, make_response, redirect, send_from_directory, url_for
 from flask_jwt_extended import get_jwt
-
 from qwc_services_core.database import DatabaseEngine
 from qwc_services_core.permissions_reader import PermissionsReader
 from qwc_services_core.runtime_config import RuntimeConfig
-
+from sqlalchemy.sql import text as sql_text
 
 db_engine = DatabaseEngine()
 
@@ -110,12 +108,12 @@ class QWC2Viewer:
         :
             db = db_engine.db_engine(self.db_url)
             with db.connect() as conn:
-                sql = sql_text("""
+                sql = sql_text(f"""
                     SELECT *
-                    FROM {schema}.user_infos ui
-                    JOIN {schema}.users u ON u.id=ui.user_id
+                    FROM {self.qwc_config_schema}.user_infos ui
+                    JOIN {self.qwc_config_schema}.users u ON u.id=ui.user_id
                     WHERE u.name=:user;
-                """.format(schema=self.qwc_config_schema))
+                """)
                 result = conn.execute(sql, {"user": identity.get("username")})
 
                 row = result.first()
@@ -136,29 +134,22 @@ class QWC2Viewer:
                     'url': request_url
                 })
                 redirect_url = urljoin(
-                    self.auth_service_url, "login?%s" % login_params
+                    self.auth_service_url, f"login?{login_params}"
                 )
                 self.logger.debug(
-                    "Restricted theme '%s' requested, "
-                    "redirecting to auth service" % theme
+                    f"Restricted theme '{theme}' requested, redirecting to auth service"
                 )
                 return redirect(redirect_url)
 
         # If there are no permitted themes, redirect to auth
         if self.redirect_to_auth_if_no_permitted_themes and self.auth_service_url:
             permitted_theme_ids = []
-            themes = self.permitted_themes(identity, None, permitted_theme_ids)
+            self.permitted_themes(identity, None, permitted_theme_ids)
             if len(permitted_theme_ids) == 0:
                 # redirect to login on auth service
-                login_params = urlencode({
-                    'url': request_url
-                })
-                redirect_url = urljoin(
-                    self.auth_service_url, "login?%s" % login_params
-                )
-                self.logger.debug(
-                    "No permitted themes, redirecting to auth service"
-                )
+                login_params = urlencode({'url': request_url})
+                redirect_url = urljoin(self.auth_service_url, f"login?{login_params}")
+                self.logger.debug("No permitted themes, redirecting to auth service")
                 return redirect(redirect_url)
 
         # check if index file is present
@@ -166,23 +157,22 @@ class QWC2Viewer:
         try:
             with open(viewer_index_file) as fh:
                 viewer_index = fh.read()
-        except:
+        except Exception as e:
             # show FileNotFoundError error
             raise Exception(
-                "[Errno 2] No such file or directory: '%s'" %
-                viewer_index_file
-            )
-        self.logger.debug("Using index '%s'" % viewer_index_file)
+                f"[Errno 2] No such file or directory: '{viewer_index_file}'"
+            ) from e
+        self.logger.debug(f"Using index '{viewer_index_file}'")
 
         # Inject CSRF token
         token = (get_jwt() or {}).get("csrf")
         if token:
-            viewer_index = viewer_index.replace('<head>', '<head>\n<meta name="csrf-token" content="%s" />' % token)
+            viewer_index = viewer_index.replace('<head>', f'<head>\n<meta name="csrf-token" content="{token}" />')
 
         # Inject CSP header and modify script tags
         nonce = secrets.token_urlsafe()
         csp = {
-            "script-src": "'nonce-%s' 'strict-dynamic' 'wasm-unsafe-eval'" % nonce,
+            "script-src": f"'nonce-{nonce}' 'strict-dynamic' 'wasm-unsafe-eval'",
             # "style-src 'nonce-%s'" % nonce # TODO
         }
         if self.extra_csp_directives:
@@ -190,10 +180,12 @@ class QWC2Viewer:
                 parts = extra_csp.strip().split(" ", 1)
                 csp[parts[0]] = (csp.get(parts[0], "") + " " + parts[1]).strip()
 
-        csp = "; ".join(list(map(lambda t: " ".join(t), csp.items()))) + ";"
-        viewer_index = viewer_index.replace('<script ', '<script nonce="%s" ' % nonce)
-        viewer_index = viewer_index.replace('<script>', '<script nonce="%s">' % nonce)
-        viewer_index = viewer_index.replace('</head>', '<script nonce="%s">window.__CSP_NONCE__ = "%s";</script>\n</head>' % (nonce, nonce))
+        csp = "; ".join([" ".join(t) for t in csp.items()]) + ";"
+        viewer_index = viewer_index.replace('<script ', f'<script nonce="{nonce}" ')
+        viewer_index = viewer_index.replace('<script>', f'<script nonce="{nonce}">')
+        viewer_index = viewer_index.replace(
+            '</head>', f'<script nonce="{nonce}">window.__CSP_NONCE__ = "{nonce}";</script>\n</head>'
+        )
 
         response = make_response(viewer_index)
         response.headers['Content-Security-Policy'] = csp
@@ -253,12 +245,12 @@ class QWC2Viewer:
                     # add custom user info fields
                     db = db_engine.db_engine(self.db_url)
                     with db.connect() as conn:
-                        sql = sql_text("""
+                        sql = sql_text(f"""
                             SELECT *
-                            FROM {schema}.user_infos ui
-                            JOIN {schema}.users u ON u.id=ui.user_id
+                            FROM {self.qwc_config_schema}.user_infos ui
+                            JOIN {self.qwc_config_schema}.users u ON u.id=ui.user_id
                             WHERE u.name=:user;
-                        """.format(schema=self.qwc_config_schema))
+                        """)
                         result = conn.execute(sql, {"user": identity.get("username")})
 
                         row = result.first()
@@ -271,10 +263,7 @@ class QWC2Viewer:
                             if field in entries:
                                 user_infos[field] = entries[field]
                             else:
-                                self.logger.warning(
-                                    "Could not read user info field '%s' "
-                                    "from identity" % field
-                                )
+                                self.logger.warning(f"Could not read user info field '{field}' from identity")
                         user_infos["default_url_params"] = entries.get("default_url_params", "")
 
                 if isinstance(identity.get('user_infos'), dict):
@@ -344,7 +333,7 @@ class QWC2Viewer:
             })
 
         # Disallow any parameters not set in self.user_info_fields and not "default_url_params"
-        allowed_params = self.user_info_fields + ["default_url_params"]
+        allowed_params = [*self.user_info_fields, "default_url_params"]
         disallowed_params = [key for key in params if key not in allowed_params]
 
         if disallowed_params:
@@ -358,9 +347,9 @@ class QWC2Viewer:
         values = {}
         for idx, entry in enumerate(params.items()):
             key, value = entry
-            placeholder = "__val%d" % idx
+            placeholder = f"__val{idx}"
             columns.append(key)
-            values_sql.append(":%s" % placeholder)
+            values_sql.append(f":{placeholder}")
             values[placeholder] = value
 
         values["username"] = identity.get("username")
@@ -413,26 +402,22 @@ class QWC2Viewer:
             # resolve permalink
             url = urljoin(self.internal_permalink_service_url, 'resolvepermalink')
             params = {'key': params['k']}
-            self.logger.debug(
-                "Resolving permalink at %s?%s" % (url, urlencode(params))
-            )
+            self.logger.debug(f"Resolving permalink at {url}?{urlencode(params)}")
             headers = {}
             if self.tenant_handler.tenant_header:
                 # forward tenant header
                 headers[self.tenant_handler.tenant_header] = self.tenant
-                self.logger.debug("Forwarding tenant header: %s" % headers)
+                self.logger.debug(f"Forwarding tenant header: {headers}")
             response = requests.get(url, params=params, headers=headers)
 
             # extract theme
             permalink = json.loads(response.text)
             permalink_theme = permalink.get('query', {}).get('t')
             if permalink_theme:
-                self.logger.debug(
-                    "Permalink contains theme '%s'" % permalink_theme
-                )
+                self.logger.debug(f"Permalink contains theme '{permalink_theme}'")
                 theme = permalink_theme
         except Exception as e:
-            self.logger.error("Could not resolve permalink:\n%s" % e)
+            self.logger.error(f"Could not resolve permalink:\n{e}")
 
         return theme
 
@@ -462,7 +447,7 @@ class QWC2Viewer:
             return False
 
         # check whether theme is not public
-        public_theme_ids = self.__collect_theme_ids(self.permitted_themes(None, None))
+        public_theme_ids = self.__collect_theme_ids(self.permitted_themes(None, None, []))
         return theme not in public_theme_ids
 
     def __collect_theme_ids(self, theme_group):
@@ -470,11 +455,8 @@ class QWC2Viewer:
 
         :param obj theme_group: Theme group from config or permissions
         """
-        theme_ids = []
-
         # collect theme items
-        for item in theme_group.get('items', []):
-            theme_ids.append(item['id'])
+        theme_ids = [item['id'] for item in theme_group.get('items', [])]
 
         # collect sub groups
         for subgroup in theme_group.get('subdirs', []):
@@ -537,10 +519,10 @@ class QWC2Viewer:
         for key in restricted_viewer_tasks:
             plugins_to_remove = []
             for plugin in plugins:
-                if plugin.get("name") == key:
-                    plugins_to_remove.append(plugin)
-                elif plugin.get("name") == "TaskButton" and \
-                    plugin.get("cfg", {}).get("task", "") + plugin.get("cfg").get('mode', "") == key:
+                if plugin.get("name") == key or (
+                    plugin.get("name") == "TaskButton" and
+                    plugin.get("cfg", {}).get("task", "") + plugin.get("cfg").get('mode', "") == key
+                ):
                     plugins_to_remove.append(plugin)
                 else:
                     if 'menuItems' in plugin.get('cfg', {}):
@@ -580,7 +562,7 @@ class QWC2Viewer:
         self.logger.debug('Getting themes.json for identity: %s', identity)
 
         # filter by permissions
-        themes = self.permitted_themes(identity, lang)
+        themes = self.permitted_themes(identity, lang, [])
 
         return jsonify({"themes": themes})
 
@@ -606,17 +588,18 @@ class QWC2Viewer:
                 fullEditConfig = item.get('editConfig', {})
                 if layers is None:
                     return fullEditConfig
-                editConfig = dict([
-                    (layer, fullEditConfig[layer]) for layer in layers if layer in fullEditConfig
-                ])
+                editConfig = {layer: fullEditConfig[layer] for layer in layers if layer in fullEditConfig}
                 missingconfigs = []
                 while True:
                     # Recursively collect referenced editConfigs
                     reltables = []
                     for config in editConfig.values():
-                        getLayerName = lambda entry: entry['layerName'] if isinstance(entry, dict) else entry
+                        def getLayerName(entry):
+                            return entry['layerName'] if isinstance(entry, dict) else entry
                         reltablenames = [getLayerName(entry) for entry in config.get('reltables', [])]
-                        reltables += [table for table in reltablenames if table not in editConfig and table not in missingconfigs]
+                        reltables += [
+                            table for table in reltablenames if table not in editConfig and table not in missingconfigs
+                        ]
                     if not reltables:
                         break
                     for table in reltables:
@@ -649,7 +632,7 @@ class QWC2Viewer:
         path_is_permitted = next((x for x in permitted_viewer_assets if fnmatch.fnmatch(path, x)), None)
 
         if path_is_restricted and not path_is_permitted:
-            self.logger.debug("Asset %s is not permitted, returning 404" % path)
+            self.logger.debug(f"Asset {path} is not permitted, returning 404")
             return abort(404)
 
         if not path.startswith(self.BASE64_IMAGE_ROUTE_PREFIX):
@@ -771,7 +754,7 @@ class QWC2Viewer:
                 image_path = None
                 if 'thumbnail_base64' in layer:
                     image_path = self.extract_base64_thumbnail_image(
-                        "bg_%s" % layer['name'], layer['thumbnail_base64']
+                        f"bg_{layer['name']}", layer['thumbnail_base64']
                     )
                     # remove thumbnail_base64
                     del layer['thumbnail_base64']
@@ -802,7 +785,7 @@ class QWC2Viewer:
                 )
 
             # NOTE: do not add a random suffix so it may be cached in clients
-            filename = "%s.png" % name
+            filename = f"{name}.png"
 
             # decode and save as image file
             file_path = os.path.join(
@@ -817,10 +800,7 @@ class QWC2Viewer:
             )
         except Exception as e:
             image_path = None
-            self.logger.error(
-                "Could not extract Base64 encoded thumbnail image for '%s':"
-                "\n%s" % (name, e)
-            )
+            self.logger.error(f"Could not extract Base64 encoded thumbnail image for '{name}':\n{e}")
 
         return image_path
 
@@ -833,9 +813,9 @@ class QWC2Viewer:
         # Attempt to read form
         full_path = os.path.join(self.qwc2_path, 'assets', path)
         try:
-            with open(full_path, 'r') as fh:
+            with open(full_path) as fh:
                 form = fh.read()
-        except:
+        except Exception:
             return abort(404)
 
         if not lang:
@@ -855,15 +835,15 @@ class QWC2Viewer:
 
         # Attempt to load translation file
         try:
-            with open(translation_path, 'r', encoding='utf-8') as fh:
+            with open(translation_path, encoding='utf-8') as fh:
                 translation = fh.read()
-        except:
+        except Exception:
             return Response(form, mimetype='text/xml')
 
         try:
             form_document = ElementTree.fromstring(form)
             ts_document = ElementTree.fromstring(translation)
-        except:
+        except Exception:
             return Response(form, mimetype='text/xml')
 
         # Build translation string lookup
@@ -884,7 +864,7 @@ class QWC2Viewer:
         form =  ElementTree.tostring(form_document, encoding='utf8', method='xml')
         return Response(form, mimetype='text/xml')
 
-    def permitted_themes(self, identity, lang, permitted_theme_ids=[]):
+    def permitted_themes(self, identity, lang, permitted_theme_ids):
         """Return qwc2_themes filtered by permissions.
 
         :param obj identity: User identity
@@ -977,7 +957,7 @@ class QWC2Viewer:
         """
         if not self.show_restricted_themes:
             return
-        if self.show_restricted_themes_whitelist and not item["name"] in self.show_restricted_themes_whitelist:
+        if self.show_restricted_themes_whitelist and item["name"] not in self.show_restricted_themes_whitelist:
             return
 
         items.append({
@@ -1004,10 +984,10 @@ class QWC2Viewer:
             # WMS not permitted
             return None
 
-        item['url'] = "%s%s" % (self.ogc_service_url, wms_name)
-        item['featureInfoUrl'] = "%s%s" % (self.info_service_url, wms_name)
-        item['legendUrl'] = "%s%s?%s" % (self.legend_service_url, wms_name, item.get("extraLegendParameters", ""))
-        item['printUrl'] = "%s%s" % (self.print_service_url, wms_name)
+        item['url'] = f"{self.ogc_service_url}{wms_name}"
+        item['featureInfoUrl'] = f"{self.info_service_url}{wms_name}"
+        item['legendUrl'] = f'{self.legend_service_url}{wms_name}?{item.get("extraLegendParameters", "")}'
+        item['printUrl'] = f"{self.print_service_url}{wms_name}"
         hasRestrictedContent = False
 
         # combine permissions
@@ -1063,10 +1043,15 @@ class QWC2Viewer:
         # self.filter_edit_config(item, identity)
         if item.get('editConfig'):
             # Collect layer names for toplevel geometryless datasets which are not referenced in reltablenames
-            nogeom_layer_names = set([layername for layername in item['editConfig'] if item['editConfig'][layername]['geomType'] is None])
-            getLayerName = lambda entry: entry['layerName'] if isinstance(entry, dict) else entry
-            for key, config in item['editConfig'].items():
-                nogeom_layer_names = nogeom_layer_names.difference([getLayerName(entry) for entry in config.get('reltables', [])])
+            nogeom_layer_names = {
+                layername for layername in item['editConfig'] if item['editConfig'][layername]['geomType'] is None
+            }
+            def getLayerName(entry):
+                return entry['layerName'] if isinstance(entry, dict) else entry
+            for config in item['editConfig'].values():
+                nogeom_layer_names = nogeom_layer_names.difference(
+                    [getLayerName(entry) for entry in config.get('reltables', [])]
+                )
             nogeom_layer_names = ",".join(nogeom_layer_names)
             if nogeom_layer_names:
                 nogeom_layer_names += ","
@@ -1155,7 +1140,7 @@ class QWC2Viewer:
         edit_config = {}
         for name, config in item.get('editConfig').items():
             # dataset name from editDataset or WMS and name
-            dataset = "%s.%s" % (item['wms_name'], name)
+            dataset = f"{item['wms_name']}.{name}"
             dataset = config.get('editDataset', dataset)
 
             permitted_dataset = self.permitted_dataset(
@@ -1304,10 +1289,11 @@ class QWC2Viewer:
                     if 'default' in search_provider:
                         del search_provider['default']
 
-                    layers = {}
-                    for layer, facet in layer_facets.items():
-                        if facet in permitted_solr_facets or all_facets_permitted:
-                            layers[layer] = facet
+                    layers = {
+                        layer: facet
+                        for layer, facet in layer_facets.items()
+                        if facet in permitted_solr_facets or all_facets_permitted
+                    }
                     search_provider['params']['layers'] = layers
                     if 'layers' in search_provider:
                         del search_provider['layers']
