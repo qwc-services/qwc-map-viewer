@@ -3,6 +3,7 @@ import fnmatch
 import os
 import secrets
 import tempfile
+import traceback
 from urllib.parse import parse_qsl, urlencode, urljoin, urlparse, urlunparse
 from xml.etree import ElementTree
 
@@ -199,6 +200,8 @@ class QWC2Viewer:
         """
         self.logger.debug('Generating config.json for identity: %s', identity)
 
+        db = db_engine.db_engine(self.db_url) if self.db_url else None
+
         # deep copy config from qwc2_config
         config = json.loads(json.dumps(
             self.resources['qwc2_config']['config']
@@ -241,9 +244,8 @@ class QWC2Viewer:
                 if self.display_user_info_field:
                     display_username = identity.get(self.display_user_info_field)
 
-                if self.db_url:
+                if db:
                     # add custom user info fields
-                    db = db_engine.db_engine(self.db_url)
                     with db.connect() as conn:
                         sql = sql_text(f"""
                             SELECT *
@@ -300,6 +302,42 @@ class QWC2Viewer:
             config['plugins']['desktop'], restricted_viewer_tasks
         )
 
+        # Inject NewsPopup from DB, unless a configuration is manually provided
+        haveNewsDocument = False
+        for section in ['common', 'mobile', 'desktop']:
+            if newspopup := next(filter(lambda entry: entry['name'] == "NewsPopup", config['plugins'][section]), None):
+                newspopupCfg = newspopup.get("cfg", {})
+                haveNewsDocument |= bool(newspopupCfg.get("newsDocumentBody") or newspopupCfg.get("newsDocument"))
+        if db and not haveNewsDocument:
+            try:
+                lang = params.get('lang', None)
+                with db.connect() as conn:
+                    sql = sql_text(f"""
+                        SELECT *
+                        FROM {self.qwc_config_schema}.news_entries
+                        WHERE lang=:lang or COALESCE(lang, '') = ''
+                        ORDER BY date DESC
+                    """)
+                    result = conn.execute(sql, {"lang": lang})
+                    rows = [row._asdict() for row in result]
+                    news_document = "\n".join([row["body"] for row in rows])
+                    news_date = rows[0]["date"] if rows else None
+            except Exception:
+                self.logger.warning("news_entries query failed")
+                self.logger.debug(traceback.format_exc())
+                news_document = None
+                news_date = None
+            if news_document:
+                for section in ['common', 'mobile', 'desktop']:
+                    if newspopup := next(filter(lambda entry: entry['name'] == "NewsPopup", config['plugins'][section]), None):
+                        newspopup["cfg"] = {
+                            **newspopup.get("cfg", {}),
+                            "newsDocumentBody": news_document,
+                            "newsRev": format(news_date, "%Y-%m-%d")
+                        }
+                        newspopup["cfg"].pop("newsDocument", None)
+
+        # Add additional fields to config
         config['username'] = display_username or username
         config['tenant'] = self.tenant
         config['capabilities'] = self.permissions_handler.resource_permissions(

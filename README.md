@@ -183,6 +183,16 @@ Additional user info fields may be read from the `user_infos` table of the QWC C
 ```
 These will be added as `user_infos` in the `config.json` response if present in the current identity.
 
+### DB news entries
+
+The QWC [NewsPopup plugin](https://docs.qwc.app/master/references/qwc2_plugins/#newspopup) allows displaying a newsletter in a popup dialog.
+
+The newsletter contents may be a static URL of HTML fragment, as manually configured in the `config.json`, or alternatively the HTML fragments can be
+stored in the `qwc_config.news_entries` DB table. Each table row contains a HTML fragment and a publish date and optionally a language.
+
+If `qwc_config.news_entries` are present, and no `newsDocument` or `newsDocumentBody` exists in the `config.json`, the `qwc-map-viewer` will automatically
+inject a `newsDocumentBody` constructed from the `qwc_config.news_entries` table. Entries will be filtered by language (entries whose language match the viewer language, or with unspecified language) and sorted in descending order by publish date.
+
 ### Options for handling restricted themes
 
 Optional settings for restricted themes:

@@ -84,6 +84,7 @@ def index():
 
 @app.route('/config.json')
 @optional_auth
+# lang: Optional, asset language, i.e. en-US
 def qwc2_config():
     qwc2_viewer = qwc2_viewer_handler()
     return with_no_cache_headers(qwc2_viewer.qwc2_config(get_identity(), request.args))
