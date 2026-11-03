@@ -1,0 +1,95 @@
+name: Scheduled publishing of qwc service docker image
+
+on:
+  schedule:
+    - cron: "23 23 * * THU" # every Thursday on 23:23 UTC
+
+  workflow_dispatch:
+
+jobs:
+
+  test:
+    uses: ./.github/workflows/test.yml
+
+  branches:
+    runs-on: ubuntu-latest
+    outputs:
+      branches: ${{ steps.branches.outputs.branches }}
+
+    steps:
+      - uses: actions/checkout@master
+        with:
+          fetch-depth: 0
+
+      - id: branches
+        run: |
+          curr_year=$(date +%Y)
+          prev_year=$((curr_year - 1))
+          branches=$(\
+            git for-each-ref --format='%(refname:lstrip=3)' refs/remotes/origin | \
+            grep -Eo "^(main|master|${curr_year}-lts|${prev_year}-lts)$" | \
+            jq -R -s -c 'split("\n")[:-1]'\
+          )
+          echo "Found branches $branches"
+          echo "branches=$branches" >> "$GITHUB_OUTPUT"
+
+  build:
+    needs: [test, branches]
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        branch: ${{ fromJson(needs.branches.outputs.branches) }}
+
+    steps:
+      - uses: actions/checkout@master
+        with:
+          ref: ${{ matrix.branch }}
+          fetch-depth: 0
+
+      - name: Get version tags
+        id: get_tag
+        run: |
+          branch_suffix=""
+          if [[ "${{ matrix.branch }}" != "main" ]] && [[ "${{ matrix.branch }}" != "master" ]]; then
+            branch_suffix="-${{ matrix.branch }}"
+            tag=$(git describe --tags --abbrev=0 ${{ matrix.branch }})
+            echo "bundle_version=${GITHUB_REF:10:5}.0.${GITHUB_REF:16}" >>$GITHUB_OUTPUT
+            echo "bundle_version=${tag:0:5}.0.${tag:6}" >>$GITHUB_OUTPUT
+          else
+            echo "bundle_version=$(git describe --tags --abbrev=0 ${{ matrix.branch }})" >>$GITHUB_OUTPUT
+          fi
+          echo "tag=latest${branch_suffix}" >>$GITHUB_OUTPUT
+          echo "map_viewer_base_version=latest${branch_suffix}" >>$GITHUB_OUTPUT
+
+      - name: Print tags
+        run: |
+          echo "Commit: $(git rev-parse HEAD)"
+          echo "Tag: ${{ steps.get_tag.outputs.tag }}"
+          echo "Bundle version: ${{ steps.get_tag.outputs.bundle_version }}"
+          echo "map-viewer base version: ${{ steps.get_tag.outputs.map_viewer_base_version }}"
+
+      - name: Build and publish base image
+        uses: elgohr/Publish-Docker-Github-Action@v5
+        env:
+          BASE_TAG: ${{ steps.get_tag.outputs.tag }}
+          UPDATE_DEPS: ${{ startsWith(steps.get_tag.outputs.tag, 'latest') }}
+        with:
+          name: sourcepole/qwc-map-viewer-base
+          username: ${{ secrets.DOCKER_HUB_USER }}
+          password: ${{ secrets.DOCKER_HUB_PASSWORD }}
+          tags: "${{ steps.get_tag.outputs.tag }}"
+          buildargs: BASE_TAG,UPDATE_DEPS
+
+      - name: Build and publish stock image
+        uses: elgohr/Publish-Docker-Github-Action@v5
+        env:
+          QWC2_URL: https://github.com/qgis/qwc2/releases/download/${{ steps.get_tag.outputs.bundle_version }}/qwc2-stock-app.zip
+          BASE_IMAGE_VERSION: ${{ steps.get_tag.outputs.map_viewer_base_version }}
+        with:
+          name: sourcepole/qwc-map-viewer
+          username: ${{ secrets.DOCKER_HUB_USER }}
+          password: ${{ secrets.DOCKER_HUB_PASSWORD }}
+          tags: "${{ steps.get_tag.outputs.tag }}"
+          dockerfile: Dockerfile-qwc2-app
+          buildargs: QWC2_URL,BASE_IMAGE_VERSION

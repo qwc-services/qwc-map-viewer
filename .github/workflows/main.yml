@@ -10,65 +10,52 @@ on:
 
 jobs:
 
-    test:
-      runs-on: ubuntu-latest
-      steps:
+  test:
+    uses: ./.github/workflows/test.yml
 
-      - uses: actions/checkout@master
+  build:
+    if: github.ref_type == 'tag'
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
 
-      - name: Setting up python 3.12
-        uses: actions/setup-python@v7
-        with:
-            python-version: '3.12'
+    - uses: actions/checkout@master
 
-      - name: Validate schema
-        run: |
-          python -m pip install check-jsonschema
-          check-jsonschema --check-metaschema schemas/qwc-map-viewer.json
+    - name: Get version tag
+      id: get_tag
+      run: |
+        if [ ${{ endsWith(github.ref, '-lts') }} = true ]; then
+          echo "tag=latest-lts,latest-${GITHUB_REF:11:4}-lts,${GITHUB_REF:10}" >>$GITHUB_OUTPUT
+          echo "bundle_version=${GITHUB_REF:10:5}.0.${GITHUB_REF:16}" >>$GITHUB_OUTPUT
+          echo "base_tag=latest-${GITHUB_REF:11:4}-lts" >>$GITHUB_OUTPUT
+        else
+          echo "tag=latest,${GITHUB_REF:10}" >>$GITHUB_OUTPUT
+          echo "bundle_version=${GITHUB_REF:10}" >>$GITHUB_OUTPUT
+          echo "base_tag=latest" >>$GITHUB_OUTPUT
+        fi
+        echo "map_viewer_base_version=${GITHUB_REF:10}" >>$GITHUB_OUTPUT
 
-    build:
-      if: github.ref_type == 'tag'
-      needs: test
-      runs-on: ubuntu-latest
-      steps:
+    - name: Build and publish base image
+      uses: elgohr/Publish-Docker-Github-Action@v5
+      env:
+        BASE_TAG: ${{ steps.get_tag.outputs.base_tag }}
+        UPDATE_DEPS: ${{ startsWith(steps.get_tag.outputs.tag, 'latest') }}
+      with:
+        name: sourcepole/qwc-map-viewer-base
+        username: ${{ secrets.DOCKER_HUB_USER }}
+        password: ${{ secrets.DOCKER_HUB_PASSWORD }}
+        tags: "${{ steps.get_tag.outputs.tag }}"
+        buildargs: BASE_TAG,UPDATE_DEPS
 
-      - uses: actions/checkout@master
-
-      - name: Get version tag
-        id: get_tag
-        run: |
-          if [ ${{ endsWith(github.ref, '-lts') }} = true ]; then
-            echo "tag=latest-lts,latest-${GITHUB_REF:11:4}-lts,${GITHUB_REF:10}" >>$GITHUB_OUTPUT
-            echo "bundle_version=${GITHUB_REF:10:5}.0.${GITHUB_REF:16}" >>$GITHUB_OUTPUT
-            echo "base_tag=latest-${GITHUB_REF:11:4}-lts" >>$GITHUB_OUTPUT
-          else
-            echo "tag=latest,${GITHUB_REF:10}" >>$GITHUB_OUTPUT
-            echo "bundle_version=${GITHUB_REF:10}" >>$GITHUB_OUTPUT
-            echo "base_tag=latest" >>$GITHUB_OUTPUT
-          fi
-          echo "app_version=${GITHUB_REF:10}" >>$GITHUB_OUTPUT
-
-      - name: Build and publish base image
-        uses: elgohr/Publish-Docker-Github-Action@v5
-        env:
-          BASE_TAG: ${{ steps.get_tag.outputs.base_tag }}
-        with:
-          name: sourcepole/qwc-map-viewer-base
-          username: ${{ secrets.DOCKER_HUB_USER }}
-          password: ${{ secrets.DOCKER_HUB_PASSWORD }}
-          tags: "${{ steps.get_tag.outputs.tag }}"
-          buildargs: BASE_TAG
-
-      - name: Build and publish stock image
-        uses: elgohr/Publish-Docker-Github-Action@v5
-        env:
-          BASE_TAG: ${{ steps.get_tag.outputs.base_tag }}
-          QWC2_URL: https://github.com/qgis/qwc2/releases/download/${{ steps.get_tag.outputs.bundle_version }}/qwc2-stock-app.zip
-          BASE_IMAGE_VERSION: ${{ steps.get_tag.outputs.app_version }}
-        with:
-          name: sourcepole/qwc-map-viewer
-          username: ${{ secrets.DOCKER_HUB_USER }}
-          password: ${{ secrets.DOCKER_HUB_PASSWORD }}
-          tags: "${{ steps.get_tag.outputs.tag }}"
-          dockerfile: Dockerfile-qwc2-app
-          buildargs: BASE_TAG,QWC2_URL,BASE_IMAGE_VERSION
+    - name: Build and publish stock image
+      uses: elgohr/Publish-Docker-Github-Action@v5
+      env:
+        QWC2_URL: https://github.com/qgis/qwc2/releases/download/${{ steps.get_tag.outputs.bundle_version }}/qwc2-stock-app.zip
+        BASE_IMAGE_VERSION: ${{ steps.get_tag.outputs.map_viewer_base_version }}
+      with:
+        name: sourcepole/qwc-map-viewer
+        username: ${{ secrets.DOCKER_HUB_USER }}
+        password: ${{ secrets.DOCKER_HUB_PASSWORD }}
+        tags: "${{ steps.get_tag.outputs.tag }}"
+        dockerfile: Dockerfile-qwc2-app
+        buildargs: QWC2_URL,BASE_IMAGE_VERSION
